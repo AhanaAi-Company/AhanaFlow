@@ -130,7 +130,7 @@ Questions?  Reply to this email or visit https://ahanazip.com/support
     <div class="footer">
       <p>AhanaAI · <a href="https://ahanazip.com">ahanazip.com</a><br>
          You received this because you subscribed to AhanaFlow {tier}.<br>
-         <a href="https://ahanazip.com/license-portal">Manage your license</a> ·
+         <a href="https://ahanaflow.com/license-portal.html">Manage your license</a> ·
          <a href="https://ahanazip.com/support">Support</a></p>
     </div>
   </div>
