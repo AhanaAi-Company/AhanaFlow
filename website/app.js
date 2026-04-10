@@ -1,14 +1,14 @@
 'use strict';
 
-const FALLBACK_ENV = {
-  PUBLIC_BRANCH_CODE: '33_event_streams',
+const FALLBACK_ENV = {.env.PUBLIC_BRANCH_CODE || 'Ahanaflow',};
+  PUBLIC_BRANCH_CODE: 'Ahanaflow',
   PUBLIC_API_BASE_URL: 'https://api.ahanazip.com',
   PUBLIC_STRIPE_PUBLISHABLE_KEY: 'pk_live_51T724SBeWx1ZIEq2zMN7dhn7zXM56nE45vgXq3xkeKHr9tIvl9i63bvH0ac5PlK52YnmqmHac63yXtXeUAbOIIlJ00HzfA6pqS',
   PUBLIC_STRIPE_PRICE_PRO: 'price_1TKSPcBeWx1ZIEq2OudAOSfQ',
   PUBLIC_STRIPE_PRICE_TEAM: 'price_1TKSV0BeWx1ZIEq2WJPGGRwU',
   PUBLIC_STRIPE_PRICE_ENTERPRISE: 'price_1TKSh6BeWx1ZIEq2MZICo5vY',
-  PUBLIC_CHECKOUT_SUCCESS_URL: 'https://ahanaflow.com/success',
-  PUBLIC_CHECKOUT_CANCEL_URL: 'https://ahanaflow.com/pricing',
+  PUBLIC_CHECKOUT_SUCCESS_URL: 'https://www.ahanaflow.com/#pricing',
+  PUBLIC_CHECKOUT_CANCEL_URL: 'https://www.ahanaflow.com/#pricing',
   PUBLIC_SIGNUP_URL: '',
   PUBLIC_API_KEY: ''
 };

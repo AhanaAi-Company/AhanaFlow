@@ -83,8 +83,8 @@ AHANAFLOW_API_KEY_REGISTRY_PATH = os.environ.get(
     "AHANAFLOW_API_KEY_REGISTRY_PATH",
     "/data/ahanaflow/api_key_registry.json",
 ).strip()
-DEFAULT_CHECKOUT_SUCCESS_URL = os.environ.get("STRIPE_CHECKOUT_SUCCESS_URL", "https://ahanaflow.com/success").strip()
-DEFAULT_CHECKOUT_CANCEL_URL = os.environ.get("STRIPE_CHECKOUT_CANCEL_URL", "https://ahanaflow.com/pricing").strip()
+DEFAULT_CHECKOUT_SUCCESS_URL = os.environ.get("STRIPE_CHECKOUT_SUCCESS_URL", "https://www.ahanaflow.com/#pricing").strip()
+DEFAULT_CHECKOUT_CANCEL_URL = os.environ.get("STRIPE_CHECKOUT_CANCEL_URL", "https://www.ahanaflow.com/#pricing").strip()
 PORTAL_CODE_TTL_SECONDS = int(os.environ.get("PORTAL_CODE_TTL_SECONDS", 600))
 PORTAL_SESSION_TTL_SECONDS = int(os.environ.get("PORTAL_SESSION_TTL_SECONDS", 3600))
 
