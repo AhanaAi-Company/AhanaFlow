@@ -21,24 +21,17 @@ const PRICE_ENV_BY_PLAN = {
 
 const checkout = window.AhanaCheckout && window.AhanaCheckout.createController({
   fallbackEnv: FALLBACK_ENV,
-  checkoutPath: '/billing/create-checkout-session',
+  checkoutPath: '/v1/stripe/create-checkout',
   defaultPlanKey: 'pro',
   enterpriseMode: 'checkout',
   loadingMessage: 'Preparing secure Stripe checkout...',
   buildCheckoutPayload: function (planKey, checkoutPlan, email, metadata, getEnv) {
     const normalized = String(planKey || checkoutPlan || 'pro').toLowerCase();
-    const envKey = PRICE_ENV_BY_PLAN[normalized] || PRICE_ENV_BY_PLAN.pro;
     return {
-      priceId: getEnv(envKey),
       email: email || '',
-      successUrl: getEnv('PUBLIC_CHECKOUT_SUCCESS_URL'),
-      cancelUrl: getEnv('PUBLIC_CHECKOUT_CANCEL_URL'),
-      metadata: Object.assign({
-        branch: getEnv('PUBLIC_BRANCH_CODE'),
-        product: 'ahanaflow',
-        plan: normalized,
-        source: 'website_pricing'
-      }, metadata || {})
+      tier: normalized,
+      success_url: getEnv('PUBLIC_CHECKOUT_SUCCESS_URL'),
+      cancel_url: getEnv('PUBLIC_CHECKOUT_CANCEL_URL')
     };
   }
 });
