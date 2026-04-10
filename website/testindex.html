@@ -1,0 +1,74 @@
+<!-- HERO SECTION - Updated -->
+<section class="hero section">
+  <div class="hero-orbit hero-orbit-a"></div>
+  <div class="hero-orbit hero-orbit-b"></div>
+  <div class="shell hero-grid">
+    <div class="hero-copy reveal">
+      <p class="eyebrow">AhanaFlow by AhanaAI • Compressed Durable State • Measured Vector Operations</p>
+      <h1>Compressed control-plane state.<br>Measured vector retrieval.<br>One runtime.</h1>
+      <p class="hero-lead">
+        AhanaFlow is a specialized runtime providing <strong>ACP-compressed durable state</strong> via UniversalStateServer and <strong>exact + HNSW vector operations</strong> via VectorStateServerV2. 
+        It delivers an <strong>88.7% smaller persisted footprint</strong> than Redis on the published KV benchmark, replay-safe WAL persistence, and transparent performance reporting — purpose-built for high-volume control-plane state, session state, audit logs, append-only event streams, and embedded/sidecar vector workloads.
+      </p>
+
+      <div class="story-grid">
+        <article class="story-card story-card-proof">
+          <span class="story-kicker">88.7% Smaller</span>
+          <p><strong>Persisted footprint</strong> vs Redis benchmark (0.57 MB vs 5.00 MB). Smaller backups, faster restores, lower replication bandwidth.</p>
+        </article>
+        <article class="story-card">
+          <span class="story-kicker">Replay-Safe WAL</span>
+          <p><strong>ACP-compressed durable persistence</strong> for KV, TTL, counters, queues, and streams. Reliable crash recovery and state portability.</p>
+        </article>
+        <article class="story-card">
+          <span class="story-kicker">Validated Performance</span>
+          <p><strong>29.9k req/s mixed-load</strong> at 1.995 ms p99 on control-plane traffic. Transparent, reproducible benchmarks.</p>
+        </article>
+        <article class="story-card">
+          <span class="story-kicker">Security Hardened</span>
+          <p>API key authentication, rate limiting, and payload enforcement built into the runtime — not added later.</p>
+        </article>
+      </div>
+
+      <div class="hero-rail">
+        <span>ACP-compressed WAL</span>
+        <span>KV · TTL · counters · queues · streams</span>
+        <span>Exact + HNSW vector (sidecar/embedded)</span>
+        <span>Replay-safe recovery</span>
+        <span>API key auth + rate limiting</span>
+        <span>Self-hosted &amp; edge ready</span>
+      </div>
+
+      <div class="hero-actions">
+        <a class="button button-primary" href="#compare">See How We Compare</a>
+        <a class="button button-ghost" href="mailto:jeremiah@ahanazip.com?subject=AhanaFlow%20Deployment%20Inquiry">Talk to the Team</a>
+      </div>
+
+      <div class="hero-trust">
+        <span>29.9k req/s mixed load</span>
+        <span>1.995 ms p99</span>
+        <span>398 qps vector (unfiltered)</span>
+        <span>88.7% smaller footprint</span>
+      </div>
+    </div>
+
+    <!-- Keep or update your SVG visual if you like; otherwise simplify -->
+    <aside class="hero-panel reveal">
+      <div class="hero-visual">
+        <!-- You can keep your existing SVG or replace with a simpler diagram showing UniversalStateServer + VectorStateServerV2 connected via compressed WAL -->
+      </div>
+      <div class="metric-grid">
+        <article class="metric-card metric-card-primary">
+          <span class="metric-label">Mixed-load throughput</span>
+          <div class="metric-value"><span class="count-up" data-target="29923">0</span><span class="metric-unit">req/s</span></div>
+          <p>UniversalStateServer — control-plane KV, counters, queues, streams.</p>
+        </article>
+        <article class="metric-card">
+          <span class="metric-label">Footprint reduction</span>
+          <div class="metric-value"><span class="count-up" data-target="88.7">0</span><span class="metric-unit">%</span></div>
+          <p>ACP-compressed WAL vs Redis benchmark baseline.</p>
+        </article>
+      </div>
+    </aside>
+  </div>
+</section>

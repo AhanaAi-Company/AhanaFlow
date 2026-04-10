@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AhanaFlow — License & API Key Portal</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0d1117; --surface: #161b22; --border: #30363d;
+    --text: #e6edf3; --muted: #8b949e; --accent: #6e40c9;
+    --blue: #58a6ff; --green: #3fb950; --orange: #f0883e;
+    --radius: 12px;
+  }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; }
+
+  .logo { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+  .logo span { color: var(--accent); }
+  .tagline { color: var(--muted); font-size: 14px; margin-bottom: 48px; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); width: 100%; max-width: 520px; overflow: hidden; }
+
+  .card-header { padding: 28px 32px; border-bottom: 1px solid var(--border); }
+  .card-header h2 { font-size: 18px; font-weight: 600; }
+  .card-header p { color: var(--muted); font-size: 13px; margin-top: 6px; line-height: 1.6; }
+
+  .card-body { padding: 32px; }
+
+  label { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); font-weight: 600; margin-bottom: 8px; }
+  input[type="email"] {
+    width: 100%; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px 16px; color: var(--text);
+    font-size: 14px; outline: none; transition: border-color 0.15s;
+  }
+  input[type="email"]:focus { border-color: var(--accent); }
+  .verify-row { display: none; margin-top: 16px; gap: 12px; }
+  .verify-row.visible { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
+
+  .btn {
+    width: 100%; margin-top: 20px; padding: 13px;
+    background: var(--accent); color: #fff; border: none;
+    border-radius: 8px; font-size: 15px; font-weight: 600;
+    cursor: pointer; transition: opacity 0.15s;
+  }
+  .btn:hover:not(:disabled) { opacity: 0.88; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .divider { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
+
+  /* Result states */
+  .result { display: none; }
+  .result.visible { display: block; }
+
+  .key-box { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 18px 20px; }
+  .key-box .key-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--accent); font-weight: 600; margin-bottom: 10px; }
+  .key-box code { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 12px; color: var(--blue); word-break: break-all; line-height: 1.7; display: block; }
+
+  .copy-btn {
+    margin-top: 12px; padding: 8px 18px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 6px; color: var(--text);
+    font-size: 12px; font-weight: 500; cursor: pointer; transition: background 0.15s;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .copy-btn:hover { background: var(--border); }
+  .copy-btn.copied { border-color: var(--green); color: var(--green); }
+
+  .instructions { margin-top: 24px; }
+  .instructions h3 { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; margin-bottom: 14px; }
+  .step { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 12px; }
+  .step-num { background: var(--accent); color: #fff; border-radius: 50%; width: 20px; height: 20px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; margin-top: 2px; }
+  .step p { font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .step code { background: var(--bg); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; font-size: 11px; color: var(--blue); }
+
+  .alert { padding: 14px 16px; border-radius: 8px; font-size: 13px; line-height: 1.6; }
+  .alert-error { background: rgba(240,56,56,0.08); border: 1px solid rgba(240,56,56,0.3); color: #ff7b72; }
+  .alert-info { background: rgba(88,166,255,0.08); border: 1px solid rgba(88,166,255,0.2); color: var(--blue); }
+
+  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; }
+  .meta-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 18px; }
+  .meta-card { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
+  .meta-card .meta-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); margin-bottom: 8px; }
+  .meta-card .meta-value { font-size: 15px; font-weight: 600; color: var(--text); }
+  .key-admin { margin-top: 24px; }
+  .key-admin-header { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 12px; }
+  .key-admin-header h3 { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; }
+  .key-create { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; margin-bottom: 16px; }
+  input[type="text"] {
+    width: 100%; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; padding: 12px 16px; color: var(--text);
+    font-size: 14px; outline: none; transition: border-color 0.15s;
+  }
+  input[type="text"]:focus { border-color: var(--accent); }
+  .key-list { display: grid; gap: 10px; }
+  .key-row { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+  .key-row strong { display: block; font-size: 13px; }
+  .key-row span { font-size: 12px; color: var(--muted); }
+  .key-row button { background: transparent; border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 8px 10px; cursor: pointer; }
+  .key-row button:hover { background: var(--border); }
+  .issued-box { margin-top: 16px; }
+  .issued-box .key-label { color: var(--green); }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .footer { margin-top: 32px; text-align: center; font-size: 12px; color: var(--muted); }
+  .footer a { color: var(--blue); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<div class="logo">🌺 Ahana<span>Flow</span></div>
+<p class="tagline">Compressed State &amp; Vector Runtime</p>
+
+<div class="card">
+  <div class="card-header">
+    <h2>License & API Key Portal</h2>
+    <p>Enter the email address associated with your AhanaFlow subscription to retrieve your license, see plan entitlements, and manage issued API keys.</p>
+  </div>
+  <div class="card-body">
+
+    <div id="form-section">
+      <label for="email-input">Subscription Email</label>
+      <input type="email" id="email-input" placeholder="you@yourcompany.com" autocomplete="email">
+      <button class="btn" id="submit-btn" onclick="requestPortalCode()">Send Access Code</button>
+      <div class="verify-row" id="verify-row">
+        <input type="text" id="access-code-input" placeholder="6-digit access code" inputmode="numeric" maxlength="6">
+        <button class="copy-btn" id="verify-btn" onclick="verifyPortalCode()">Verify Code</button>
+      </div>
+    </div>
+
+    <div id="result-section" class="result">
+      <hr class="divider">
+
+      <!-- Error state -->
+      <div id="error-box" class="alert alert-error" style="display:none"></div>
+
+      <!-- Info state (email sent) -->
+      <div id="info-box" class="alert alert-info" style="display:none"></div>
+
+      <!-- Success state -->
+      <div id="success-box" style="display:none">
+        <div class="key-box">
+          <div class="key-label">AHANAFLOW_LICENSE_KEY</div>
+          <code id="license-key-text"></code>
+        </div>
+        <button class="copy-btn" id="copy-btn" onclick="copyKey()">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25v-7.5z"/><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25v-7.5zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25h-7.5z"/></svg>
+          Copy Key
+        </button>
+
+        <div class="instructions">
+          <h3>Activate Commercial Tier</h3>
+          <div class="step">
+            <div class="step-num">1</div>
+            <p>Add to your server environment:<br>
+               <code>export AHANAFLOW_LICENSE_KEY="&lt;key&gt;"</code></p>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <p>Restart AhanaFlow (UniversalStateServer / VectorStateServerV2)</p>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <p>Verify: <code>python -c "from state_engine.codec import active_tier; print(active_tier())"</code><br>
+               Should print: <code>pro</code></p>
+          </div>
+        </div>
+
+        <div class="meta-grid">
+          <div class="meta-card">
+            <div class="meta-label">Plan</div>
+            <div class="meta-value" id="plan-value">Pro</div>
+          </div>
+          <div class="meta-card">
+            <div class="meta-label">Tier</div>
+            <div class="meta-value" id="tier-value">pro</div>
+          </div>
+          <div class="meta-card">
+            <div class="meta-label">API Key Limit</div>
+            <div class="meta-value" id="api-key-limit-value">1</div>
+          </div>
+        </div>
+
+        <div class="key-admin">
+          <div class="key-admin-header">
+            <h3>Issued API Keys</h3>
+            <span id="api-key-count" class="tagline" style="margin:0">0 / 1 active</span>
+          </div>
+          <div class="key-create">
+            <input type="text" id="api-key-label-input" placeholder="Key label (optional)" maxlength="80">
+            <button class="copy-btn" id="create-key-btn" onclick="createApiKey()">Issue New Key</button>
+          </div>
+          <div id="issued-key-box" class="key-box issued-box" style="display:none">
+            <div class="key-label">NEW API KEY</div>
+            <code id="issued-key-text"></code>
+            <button class="copy-btn" id="copy-issued-key-btn" onclick="copyIssuedKey()">Copy API Key</button>
+          </div>
+          <div id="api-key-list" class="key-list"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="footer">
+  <a href="https://ahanazip.com">ahanazip.com</a> ·
+  <a href="https://ahanazip.com/billing">Manage Billing</a> ·
+  <a href="https://ahanazip.com/support">Support</a>
+</div>
+
+<script>
+const API_BASE = "https://api.ahanazip.com";
+let currentPortalEmail = "";
+let currentPortalToken = "";
+
+async function requestPortalCode() {
+  const emailInput = document.getElementById("email-input");
+  const btn = document.getElementById("submit-btn");
+  const verifyRow = document.getElementById("verify-row");
+  const email = emailInput.value.trim();
+
+  if (!email || !email.includes("@")) {
+    showError("Please enter a valid email address.");
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Sending...';
+  hideAll();
+  currentPortalEmail = email;
+  currentPortalToken = "";
+
+  try {
+    const resp = await fetch(`${API_BASE}/portal/request-access-code`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    if (resp.status === 202) {
+      verifyRow.classList.add("visible");
+      showInfo("If this email has an active AhanaFlow subscription, a 6-digit access code has been sent. Enter it below to open the portal.");
+    } else {
+      const data = await resp.json();
+      showError(data.detail || "Something went wrong. Please try again.");
+    }
+  } catch (e) {
+    showError("Network error — please try again.");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Send Access Code";
+  }
+}
+
+async function verifyPortalCode() {
+  const verifyBtn = document.getElementById("verify-btn");
+  const code = document.getElementById("access-code-input").value.trim();
+  if (!currentPortalEmail) {
+    showError("Enter your subscription email first.");
+    return;
+  }
+  if (!code || code.length < 6) {
+    showError("Enter the 6-digit access code from your email.");
+    return;
+  }
+  verifyBtn.disabled = true;
+  verifyBtn.textContent = "Verifying...";
+  hideAll();
+  try {
+    const resp = await fetch(`${API_BASE}/portal/verify-access-code`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: currentPortalEmail, code }),
+    });
+    const data = await resp.json();
+    if (!resp.ok) {
+      showError(data.detail || "Access code verification failed.");
+      return;
+    }
+    currentPortalToken = data.portal_token || "";
+    showSuccess(data);
+    showInfo("Portal access verified.");
+  } catch (e) {
+    showError("Network error — please try again.");
+  } finally {
+    verifyBtn.disabled = false;
+    verifyBtn.textContent = "Verify Code";
+  }
+}
+
+function showSuccess(data) {
+  document.getElementById("license-key-text").textContent = data.license_key || "";
+  document.getElementById("plan-value").textContent = String(data.plan || "pro");
+  document.getElementById("tier-value").textContent = String(data.tier || "pro");
+  document.getElementById("api-key-limit-value").textContent = String(data.max_api_keys || 1);
+  renderApiKeys(data.api_keys || [], Number(data.max_api_keys || 1));
+  document.getElementById("success-box").style.display = "block";
+  document.getElementById("result-section").classList.add("visible");
+}
+function renderApiKeys(keys, maxKeys) {
+  const list = document.getElementById("api-key-list");
+  const count = document.getElementById("api-key-count");
+  const createBtn = document.getElementById("create-key-btn");
+  count.textContent = `${keys.length} / ${maxKeys} active`;
+  createBtn.disabled = keys.length >= maxKeys;
+  if (!keys.length) {
+    list.innerHTML = '<div class="alert alert-info">No API keys issued yet.</div>';
+    return;
+  }
+  list.innerHTML = keys.map((item) => {
+    const label = escapeHtml(item.label || "API key");
+    const preview = escapeHtml(item.preview || "");
+    const created = item.created_at ? new Date(item.created_at * 1000).toLocaleDateString() : "";
+    return `<div class="key-row"><div><strong>${label}</strong><span>ends with ${preview} · created ${created}</span></div><button type="button" onclick="revokeApiKey('${escapeHtml(item.id || '')}')">Revoke</button></div>`;
+  }).join("");
+}
+function showError(msg) {
+  const el = document.getElementById("error-box");
+  el.innerHTML = msg;
+  el.style.display = "block";
+  document.getElementById("result-section").classList.add("visible");
+}
+function showInfo(msg) {
+  const el = document.getElementById("info-box");
+  el.innerHTML = msg;
+  el.style.display = "block";
+  document.getElementById("result-section").classList.add("visible");
+}
+function hideAll() {
+  document.getElementById("error-box").style.display = "none";
+  document.getElementById("info-box").style.display = "none";
+  document.getElementById("success-box").style.display = "none";
+  document.getElementById("result-section").classList.remove("visible");
+}
+async function copyKey() {
+  const key = document.getElementById("license-key-text").textContent;
+  await navigator.clipboard.writeText(key);
+  const btn = document.getElementById("copy-btn");
+  btn.textContent = "✓ Copied!";
+  btn.classList.add("copied");
+  setTimeout(() => { btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25v-7.5z"/><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25v-7.5zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25h-7.5z"/></svg> Copy Key'; btn.classList.remove("copied"); }, 2000);
+}
+async function copyIssuedKey() {
+  const key = document.getElementById("issued-key-text").textContent;
+  await navigator.clipboard.writeText(key);
+}
+async function createApiKey() {
+  if (!currentPortalEmail) {
+    showError("Open your portal first so AhanaFlow can resolve your subscription.");
+    return;
+  }
+  const label = document.getElementById("api-key-label-input").value.trim();
+  try {
+    const resp = await fetch(`${API_BASE}/api-keys/create`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-portal-token": currentPortalToken },
+      body: JSON.stringify({ email: currentPortalEmail, label }),
+    });
+    const data = await resp.json();
+    if (!resp.ok) {
+      showError(data.detail || "Unable to issue API key.");
+      return;
+    }
+    document.getElementById("issued-key-text").textContent = data.api_key || "";
+    document.getElementById("issued-key-box").style.display = "block";
+    renderApiKeys(data.api_keys || [], Number(data.max_api_keys || 1));
+    showInfo("A new API key was issued. Copy it now — it will not be shown again.");
+  } catch (e) {
+    showError("Network error — please try again.");
+  }
+}
+async function revokeApiKey(keyId) {
+  if (!currentPortalEmail || !keyId) {
+    return;
+  }
+  try {
+    const resp = await fetch(`${API_BASE}/api-keys/revoke`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-portal-token": currentPortalToken },
+      body: JSON.stringify({ email: currentPortalEmail, keyId }),
+    });
+    const data = await resp.json();
+    if (!resp.ok) {
+      showError(data.detail || "Unable to revoke API key.");
+      return;
+    }
+    renderApiKeys(data.api_keys || [], Number(data.max_api_keys || 1));
+    showInfo("API key revoked.");
+  } catch (e) {
+    showError("Network error — please try again.");
+  }
+}
+function escapeHtml(s) {
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+// Allow Enter key on email input
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("email-input").addEventListener("keydown", e => {
+    if (e.key === "Enter") requestPortalCode();
+  });
+  document.getElementById("access-code-input").addEventListener("keydown", e => {
+    if (e.key === "Enter") verifyPortalCode();
+  });
+});
+</script>
+</body>
+</html>
