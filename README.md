@@ -19,7 +19,7 @@
 
 ## What is AhanaFlow?
 
-**AhanaFlow** is a **compressed, self-contained state and event streaming engine** built on AhanaAI's Ahana Compression Protocol (ACP). It provides:
+**AhanaFlow** is a Database suite to replace both Sqlite and Redis using a cutting edge **compressed, self-contained state and event streaming engine** built on AhanaAI's Ahana Compression Protocol (ACP). It provides:
 
 - **Key-Value Store** with TTL, atomic counters, and grouped operations
 - **FIFO Queues** for job processing and async workflows  
