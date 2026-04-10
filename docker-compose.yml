@@ -1,0 +1,105 @@
+# AhanaAI Event Streams — docker-compose self-hosted deployment
+# Usage:
+#   docker compose up -d            # Start in background
+#   docker compose logs -f          # Follow logs
+#   docker compose down             # Stop and remove containers
+#   docker compose down -v          # Stop and remove volumes (DANGER: deletes data)
+
+version: "3.9"
+
+services:
+  event-streams:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ahana-event-streams:latest
+    container_name: ahana_event_streams
+    restart: unless-stopped
+    
+    ports:
+      - "${UNIVERSAL_PORT:-9633}:9633"
+      - "${VECTOR_PORT:-9644}:9644"
+    
+    environment:
+      # UniversalStateServer configuration
+      UNIVERSAL_HOST: "${UNIVERSAL_HOST:-0.0.0.0}"
+      UNIVERSAL_PORT: "${UNIVERSAL_PORT:-9633}"
+      UNIVERSAL_WAL: "${UNIVERSAL_WAL:-/data/universal/universal_server.wal}"
+      
+      # VectorStateServerV2 configuration
+      VECTOR_HOST: "${VECTOR_HOST:-0.0.0.0}"
+      VECTOR_PORT: "${VECTOR_PORT:-9644}"
+      VECTOR_WAL: "${VECTOR_WAL:-/data/vector/vector_server.wal}"
+      
+      # Python environment
+      PYTHONPATH: "/app"
+      PYTHONUNBUFFERED: "1"
+    
+    volumes:
+      # Persistent WAL storage — DO NOT DELETE in production
+      - universal_wal:/data/universal
+      - vector_wal:/data/vector
+      
+      # Optional: mount external config
+      # - ./config.json:/data/config.json:ro
+    
+    security_opt:
+      - no-new-privileges:true
+    
+    # Read-only root filesystem (writable /data only)
+    read_only: true
+    tmpfs:
+      - /tmp:noexec,nosuid,size=64m
+    
+    cap_drop:
+      - ALL
+    
+    networks:
+      - ahana-internal
+    
+    healthcheck:
+      test: ["CMD", "python3", "/app/healthcheck.py"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    
+    deploy:
+      resources:
+        limits:
+          memory: 4g
+          cpus: '2.0'
+        reservations:
+          cpus: "0.5"
+          memory: 1g
+    
+    labels:
+      # Prometheus scrape annotations
+      prometheus.io/scrape: "true"
+      prometheus.io/port: "9633"
+      prometheus.io/path: "/metrics"
+      
+      # Service metadata
+      com.ahanaai.service: "event-streams"
+      com.ahanaai.branch: "33"
+      com.ahanaai.version: "1.0.0"
+
+volumes:
+  universal_wal:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${UNIVERSAL_WAL_HOST_PATH:-./data/universal}
+  
+  vector_wal:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ${VECTOR_WAL_HOST_PATH:-./data/vector}
+
+networks:
+  ahana-internal:
+    driver: bridge
+    internal: false

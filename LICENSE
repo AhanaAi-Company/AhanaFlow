@@ -1,0 +1,117 @@
+# AhanaFlow Dual License
+
+Copyright (c) 2026 AhanaAI Corporation
+
+## Community Edition License (Non-Commercial Use)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software for **non-commercial purposes only**, subject to the following
+conditions:
+
+### Non-Commercial Use Definition
+
+Non-commercial use includes:
+- Personal projects and learning
+- Academic research and education
+- Internal tools for non-profit organizations
+- Open-source projects (not providing commercial services)
+- Development and testing environments
+
+### Restrictions
+
+**Commercial use is strictly prohibited without a valid AhanaFlow commercial license.**
+
+Commercial use includes, but is not limited to:
+- Deploying AhanaFlow in production services that generate revenue
+- Offering AhanaFlow as part of a commercial product or service
+- Using AhanaFlow to process data for commercial clients
+- Running AhanaFlow in commercial SaaS, PaaS, or infrastructure services
+- Any use where AhanaFlow provides value to a for-profit business operation
+
+### Conditions
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+## Commercial License
+
+For commercial use, you must obtain a valid commercial license and API key from
+AhanaAI Corporation.
+
+### How to Get a Commercial License
+
+Visit **https://www.ahanaflow.com** to:
+
+1. **Free Tier** - For small commercial projects (≤10K requests/month):
+   - Register for a free API key
+   - Deploy with community-edition compression (50-60% reduction)
+   - No credit card required
+
+2. **API Plan** - For production deployments ($49-$499/month):
+   - Purchase an API key through the website
+   - Unlock Pro-tier compression (88.7% reduction with trained dictionary)
+   - Priority support and SLA guarantees
+   - Volume discounts available
+
+3. **Enterprise Plan** - For large-scale deployments (custom pricing):
+   - Contact sales@ahanaai.com
+   - On-premises deployment support
+   - Custom compression dictionaries trained on your data
+   - Dedicated support and architecture consultation
+   - Source code access available for security audits
+
+### Benefits of Commercial License
+
+✓ **88.7% WAL compression** (vs 50-60% community edition)  
+✓ Trained dictionary codec optimized for control-plane state  
+✓ Production SLA and priority support  
+✓ Legal indemnification for commercial deployment  
+✓ Volume-based pricing with predictable costs  
+✓ Early access to new features  
+
+### Compliance
+
+By deploying AhanaFlow in a commercial environment, you agree to:
+
+1. Register at www.ahanaflow.com and obtain a valid API key
+2. Include your API key in your deployment configuration
+3. Honor usage limits and billing agreements
+4. Not reverse-engineer or redistribute proprietary binary components
+
+### Enforcement
+
+AhanaAI Corporation reserves the right to:
+- Audit commercial usage and enforce license compliance
+- Revoke API keys for license violations
+- Pursue legal remedies for unauthorized commercial use
+
+---
+
+## Summary Table
+
+| Use Case | License Required | Cost | Compression |
+|----------|-----------------|------|-------------|
+| Personal projects | Community (this file) | Free | 50-60% |
+| Academic research | Community (this file) | Free | 50-60% |
+| Commercial (≤10K req/mo) | Free API key | Free | 50-60% |
+| Commercial production | Paid API plan | $49-$499/mo | 88.7% |
+| Enterprise deployment | Enterprise license | Custom | 88.7%+ |
+
+---
+
+For licensing questions, contact: licensing@ahanaai.com  
+For commercial inquiries: sales@ahanaai.com  
+Website: https://www.ahanaflow.com  
+
+🌺 AhanaAI — Compression Reimagined

@@ -1,0 +1,38 @@
+{
+  "name": "ahanaflow",
+  "version": "1.0.0",
+  "description": "AhanaFlow — Compressed State & Event Engine SDK by AhanaAI. In-process: 1.57M ops/s in fast mode (March 30, 2026), about 1.30x local SQLite WAL NORMAL, about 4.9x smaller WAL. TCP server: ~125-365K ops/s depending on operation.",
+  "main": "index.js",
+  "bin": {
+    "ahanaflow": "./cli.js"
+  },
+  "exports": {
+    ".": {
+      "require": "./index.js",
+      "import": "./index.mjs"
+    }
+  },
+  "types": "index.d.ts",
+  "files": ["index.js", "index.mjs", "index.d.ts", "cli.js", "README.md"],
+  "scripts": {
+    "test": "node test/basic.test.js"
+  },
+  "keywords": [
+    "compression", "kv-store", "state-engine", "redis-alternative",
+    "event-streaming", "ahana", "ahanaai", "acp"
+  ],
+  "author": "AhanaAI <jeremiah@ahanazip.com>",
+  "license": "Apache-2.0",
+  "homepage": "https://ahanaai.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jeremydh911/AhanaAi-co.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jeremydh911/AhanaAi-co/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {}
+}

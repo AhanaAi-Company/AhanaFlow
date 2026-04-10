@@ -1,0 +1,46 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ahanaflow"
+version = "1.0.0"
+description = "AhanaFlow — Compressed State & Event Engine SDK by AhanaAI"
+readme = "README.md"
+license = { text = "Apache-2.0" }
+authors = [{ name = "AhanaAI", email = "jeremiah@ahanazip.com" }]
+keywords = [
+  "compression", "kv-store", "state-engine", "redis-alternative",
+  "event-streaming", "ahana", "ahanaai", "acp",
+]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Database",
+  "Topic :: System :: Archiving :: Compression",
+]
+requires-python = ">=3.11"
+dependencies = []   # zero hard deps — pure stdlib TCP client
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-asyncio>=0.23"]
+
+[project.urls]
+Homepage = "https://ahanaai.com"
+Documentation = "https://github.com/jeremydh911/AhanaAi-co"
+Repository = "https://github.com/jeremydh911/AhanaAi-co"
+"Bug Tracker" = "https://github.com/jeremydh911/AhanaAi-co/issues"
+
+[project.scripts]
+ahanaflow = "ahanaflow._cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["ahanaflow"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"

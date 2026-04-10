@@ -1,0 +1,23 @@
+# Never bake private keys or secrets into the image
+ahana_codec/signing_keys/
+ahana_codec/__pycache__/
+
+# Dev artifacts
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local env files
+.env*
+!.env.example
+!.env.production.example
+
+# Test files
+tests/
+website/
+deploy/
+reports/
