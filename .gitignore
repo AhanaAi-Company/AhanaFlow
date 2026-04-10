@@ -55,3 +55,4 @@ backend/compression_service/
 # OS
 .DS_Store
 Thumbs.db
+.env.production
