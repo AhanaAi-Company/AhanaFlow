@@ -178,14 +178,11 @@ function enhancePlanButtons() {
   });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  // Initialize plan button enhancements
-  enhancePlanButtons();
-
-  // Initialize checkout controller
-  if (checkout) {
-    checkout.init();
-  } else {
-    console.warn('AhanaCheckout not available - Stripe integration may not be loaded');
-  }
-});
+// Scripts are at the bottom of <body> — DOM elements above are already parsed and ready.
+// Call init directly; no DOMContentLoaded wait needed.
+enhancePlanButtons();
+if (checkout) {
+  checkout.init();
+} else {
+  console.warn('AhanaCheckout not available - Stripe integration may not be loaded');
+}
