@@ -464,7 +464,7 @@
           <p class="eyebrow">AhanaFlow by AhanaAI &nbsp;·&nbsp; Controlled Deployment Ready &nbsp;·&nbsp; April 16 Benchmarks</p>
           <h1>Compressed durable state.<br />Integrated vector operations.<br />One runtime.</h1>
           <p class="hero-lead">
-            AhanaFlow combines UniversalStateServer and VectorStateServerV2 for teams that want fewer moving parts in control-plane workloads. On the official April 16 harness, the compact fast-mode lane measured <strong>47.6k req/s mixed load</strong>, <strong>1.157× Redis</strong> on pipelined KV, and <strong>3.42× smaller WAL</strong> than Redis AOF. Vector packaging is kept honest: the approved public lane is a <strong>sub-50 ms</strong> selective `10K / M=12 / ef_construction=32 / ef_search=24` packet with fallback <strong>0</strong>, while broad fast-ANN claims remain out of scope.
+            AhanaFlow combines UniversalStateServer and VectorStateServerV2 for teams that want fewer moving parts in control-plane workloads. On the official April 16 harness, the compact fast-mode lane measured <strong>47.6k req/s mixed load</strong>, <strong>1.157× Redis</strong> on pipelined KV, and <strong>3.42× smaller WAL</strong> than Redis AOF. Vector packaging is kept honest: the approved bounded lane is presented as <strong>measured selective vector retrieval with transparent p99 reporting</strong> on the selective `10K / M=12 / ef_construction=32 / ef_search=24` packet, with fallback <strong>0</strong> and broader mixed-load filtered p99 still transport-bound.
           </p>
           <div class="story-grid">
             <article class="story-card story-card-proof">
@@ -481,7 +481,7 @@
             </article>
             <article class="story-card">
               <span class="story-kicker">Vector Boundary</span>
-              <p><strong>46.20 ms</strong> selective vector p99 with fallback <strong>0</strong> on the approved 10K lane. April 9 insert and RAG numbers stay public, but they are not marketed as broad concurrent ANN latency proof.</p>
+              <p><strong>Measured selective vector retrieval with transparent p99 reporting</strong> on the approved bounded lane. April 9 insert and RAG numbers stay public, but broader mixed-load filtered p99 remains transport-bound.</p>
             </article>
             <article class="story-card">
               <span class="story-kicker">Security Included</span>
@@ -507,7 +507,7 @@
             <span>1.884 ms p99</span>
             <span>1.157× Redis pipeline</span>
             <span>3.42× smaller WAL</span>
-            <span>46.20 ms selective vector p99</span>
+            <span>Measured vector p99 reporting</span>
             <span>Controlled deployment ready</span>
           </div>
         </div>
@@ -1338,8 +1338,9 @@
           </article>
           <article class="compression-card">
             <span class="summary-kicker">Vector Boundary</span>
-            <h3>46.20 ms selective vector p99 with fallback 0 on the approved 10K lane.</h3>
-            <p>Approved public vector baseline: `10K` corpus, `M=12`, `ef_construction=32`, `ef_search=24`, filtered 8-bucket query, pipeline depth `2`. April 9 still supplies `82K vectors/s` insert proof and `32,036 docs/s` RAG ingest, but those do not expand the ANN latency claim boundary.</p>
+            <h3>Measured selective vector retrieval with transparent p99 reporting.</h3>
+            <p>On the approved M=12 / ef_construction=32 / ef_search=24 baseline with adaptive exact-filtered planner, the selective 8-bucket filtered lane achieves repeatable sub-50 ms p99 (best 46.966 ms) with fallback 0. Mixed-load maintenance relief reaches ~33× versus full rebuilds on the 8K→10K append-only lane. All results are replay-safe, measured with transparent telemetry, and preserve the 88.7% compression advantage.</p>
+            <p class="chart-note">Current controlled-deployment performance: sub-50 ms selective filtered p99 and ~33× maintenance relief on the approved bounded lane. Broader mixed-load filtered p99 remains transport-bound.</p>
           </article>
         </div>
 
@@ -1381,7 +1382,7 @@
                 <div class="bar-track"><div class="bar-fill bar-fill-safe" data-value="53"></div></div>
               </div>
               <div class="bar-row">
-                <div class="bar-meta"><span>Selective vector p99</span><strong>46.20 ms</strong></div>
+                <div class="bar-meta"><span>Selective vector p99</span><strong>46.966 ms</strong></div>
                 <div class="bar-track"><div class="bar-fill bar-fill-strict" data-value="62"></div></div>
               </div>
             </div>
@@ -1453,7 +1454,7 @@
         <article class="install-card reveal">
           <span class="install-step">02</span>
           <h3>Run it in your environment</h3>
-          <p>Deploy AhanaFlow inside private infrastructure, edge systems, or customer-controlled environments where footprint and operational clarity matter.</p>
+          <p>Deploy AhanaFlow inside private infrastructure, edge systems, or customer-controlled environments where footprint and operational clarity matter. Controlled-deployment HA packaging is included for bounded pilots with leader, follower, sentinel, USS, and VSS layouts.</p>
         </article>
         <article class="install-card reveal">
           <span class="install-step">03</span>
@@ -1479,6 +1480,7 @@
             <li><strong>1.157× Redis pipeline:</strong> compact fast-mode on the official April 16 pipelined KV lane</li>
             <li><strong>RESP-compatible path:</strong> async RESP lane present for Redis-style integration, with slower throughput stated honestly</li>
             <li><strong>Vector operations included:</strong> exact + HNSW for sidecar and embedded use, without a broad fast-ANN claim</li>
+            <li><strong>HA pilot packaging:</strong> leader/follower/sentinel layouts with USS + VSS are ready for controlled pilots, while automatic promotion remains in progress</li>
             <li><strong>Security included:</strong> authentication, rate limiting, payload enforcement out of the box</li>
           </ul>
           <div class="status-actions">
