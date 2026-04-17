@@ -75,11 +75,12 @@ python -m pytest tests/ -v
 ### Method 3: Docker (Production Ready)
 
 ```bash
-# Pull the official image
-docker pull ghcr.io/ahanaai-company/ahanaflow:latest
+# Pull the controlled-pilot release image
+docker pull ghcr.io/ahanaai-company/ahanaflow:branch-33-controlled-deployment-v1.0
 
-# Or build from source
-docker build -t ahanaflow:local .
+# Or build from source at the validated release tag
+git checkout branch-33-controlled-deployment-v1.0
+docker build -t ghcr.io/ahanaai-company/ahanaflow:branch-33-controlled-deployment-v1.0 .
 ```
 
 ---
@@ -214,7 +215,7 @@ version: '3.8'
 
 services:
   ahanaflow:
-    image: ghcr.io/ahanaai-company/ahanaflow:latest
+    image: ghcr.io/ahanaai-company/ahanaflow:branch-33-controlled-deployment-v1.0
     container_name: ahanaflow
     ports:
       - "9633:9633"
@@ -304,7 +305,7 @@ spec:
     spec:
       containers:
       - name: ahanaflow
-        image: ghcr.io/ahanaai-company/ahanaflow:latest
+        image: ghcr.io/ahanaai-company/ahanaflow:branch-33-controlled-deployment-v1.0
         ports:
         - containerPort: 9633
           name: universal

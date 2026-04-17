@@ -173,15 +173,14 @@ git push origin v1.0.0
 
 ```bash
 # Build image
-docker build -t ghcr.io/ahanaai-company/ahanaflow:latest .
-docker build -t ghcr.io/ahanaai-company/ahanaflow:v1.0.0 .
+git checkout branch-33-controlled-deployment-v1.0
+docker build -t ghcr.io/ahanaai-company/ahanaflow:branch-33-controlled-deployment-v1.0 .
 
 # Login to GitHub Container Registry
 echo $GITHUB_PAT | docker login ghcr.io -u ahanaai-bot --password-stdin
 
 # Push
-docker push ghcr.io/ahanaai-company/ahanaflow:latest
-docker push ghcr.io/ahanaai-company/ahanaflow:v1.0.0
+docker push ghcr.io/ahanaai-company/ahanaflow:branch-33-controlled-deployment-v1.0
 ```
 
 ### Step 6: Website Integration

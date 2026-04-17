@@ -119,7 +119,7 @@ $env:AHANAFLOW_API_KEY
 ```bash
 docker run -d \
   -e AHANAFLOW_API_KEY="ahanaflow_live_5k8j2n9f1x6c4d8e7g3h2m1p9q7r4s6t8v2w5y1z3" \
-  ghcr.io/ahanaai-company/ahanaflow:latest
+  ghcr.io/ahanaai-company/ahanaflow:branch-33-controlled-deployment-v1.0
 ```
 
 **Kubernetes:**

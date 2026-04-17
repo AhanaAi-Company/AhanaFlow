@@ -12,7 +12,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: ahana-event-streams:latest
+    image: ahana-event-streams:branch-33-controlled-deployment-v1.0
     container_name: ahana_event_streams
     restart: unless-stopped
     

@@ -209,15 +209,15 @@ for match in results:
 ### Docker
 
 ```bash
-# Pull the image
-docker pull ghcr.io/ahanaai-company/ahanaflow:latest
+# Pull the controlled-pilot release image
+docker pull ghcr.io/ahanaai-company/ahanaflow:branch-33-controlled-deployment-v1.0
 
 # Run the universal server
 docker run -d \
   -p 9633:9633 \
   -v $(pwd)/data:/data \
   --name ahanaflow \
-  ghcr.io/ahanaai-company/ahanaflow:latest
+    ghcr.io/ahanaai-company/ahanaflow:branch-33-controlled-deployment-v1.0
 
 # Test connection
 echo '{"cmd":"PING"}' | nc localhost 9633
