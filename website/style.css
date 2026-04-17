@@ -859,6 +859,68 @@ pre code {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.protocol-section {
+  padding-top: 28px;
+}
+
+.protocol-card p {
+  margin: 14px 0 0;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+}
+
+.protocol-card ul {
+  margin: 18px 0 0;
+  padding-left: 18px;
+}
+
+.protocol-card li {
+  margin-bottom: 10px;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+}
+
+.router-visual {
+  padding: 10px 0 0;
+}
+
+.router-svg {
+  width: 100%;
+  height: auto;
+}
+
+.router-note {
+  margin: 18px 0 0;
+  padding: 18px 20px;
+  border: 1px solid rgba(20, 35, 59, 0.10);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.42);
+  color: var(--ink-soft);
+}
+
+.router-note strong {
+  color: var(--ink);
+}
+
+.route-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.route-pills span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgba(20, 35, 59, 0.06);
+  color: var(--ink-soft);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
 .command-list {
   display: flex;
   flex-direction: column;

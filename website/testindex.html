@@ -4,17 +4,17 @@
   <div class="hero-orbit hero-orbit-b"></div>
   <div class="shell hero-grid">
     <div class="hero-copy reveal">
-      <p class="eyebrow">AhanaFlow by AhanaAI • Compressed Durable State • Measured Vector Operations</p>
+      <p class="eyebrow">AhanaFlow by AhanaAI • Controlled Deployment Ready • April 16 Benchmarks</p>
       <h1>Compressed control-plane state.<br>Measured vector retrieval.<br>One runtime.</h1>
       <p class="hero-lead">
-        AhanaFlow is a specialized runtime providing <strong>ACP-compressed durable state</strong> via UniversalStateServer and <strong>exact + HNSW vector operations</strong> via VectorStateServerV2. 
-        It delivers an <strong>88.7% smaller persisted footprint</strong> than Redis on the published KV benchmark, replay-safe WAL persistence, and transparent performance reporting — purpose-built for high-volume control-plane state, session state, audit logs, append-only event streams, and embedded/sidecar vector workloads.
+        AhanaFlow is a specialized runtime providing <strong>ACP-compressed durable state</strong> via UniversalStateServer and <strong>exact + HNSW vector operations</strong> via VectorStateServerV2.
+        On the official April 16 harness, the compact fast-mode lane measured <strong>47.6k req/s mixed load</strong>, <strong>1.157× Redis</strong> on pipelined KV, and <strong>3.42× smaller WAL</strong> than Redis AOF — purpose-built for high-volume control-plane state, session state, audit logs, append-only event streams, and embedded or sidecar vector workloads.
       </p>
 
       <div class="story-grid">
         <article class="story-card story-card-proof">
-          <span class="story-kicker">88.7% Smaller</span>
-          <p><strong>Persisted footprint</strong> vs Redis benchmark (0.57 MB vs 5.00 MB). Smaller backups, faster restores, lower replication bandwidth.</p>
+          <span class="story-kicker">3.42× Smaller WAL</span>
+          <p><strong>Compact fast-mode WAL</strong> measured 3,835 KB vs 13,116 KB for Redis AOF. Smaller backups, faster restores, lower replication bandwidth.</p>
         </article>
         <article class="story-card">
           <span class="story-kicker">Replay-Safe WAL</span>
@@ -22,7 +22,7 @@
         </article>
         <article class="story-card">
           <span class="story-kicker">Validated Performance</span>
-          <p><strong>29.9k req/s mixed-load</strong> at 1.995 ms p99 on control-plane traffic. Transparent, reproducible benchmarks.</p>
+          <p><strong>47.6k req/s mixed load</strong> at 1.884 ms p99 on the official compact fast-mode control-plane packet. Transparent, reproducible benchmarks.</p>
         </article>
         <article class="story-card">
           <span class="story-kicker">Security Hardened</span>
@@ -48,7 +48,7 @@
         <span>29.9k req/s mixed load</span>
         <span>1.995 ms p99</span>
         <span>398 qps vector (unfiltered)</span>
-        <span>88.7% smaller footprint</span>
+        <span>3.42× smaller WAL</span>
       </div>
     </div>
 
@@ -64,9 +64,9 @@
           <p>UniversalStateServer — control-plane KV, counters, queues, streams.</p>
         </article>
         <article class="metric-card">
-          <span class="metric-label">Footprint reduction</span>
-          <div class="metric-value"><span class="count-up" data-target="88.7">0</span><span class="metric-unit">%</span></div>
-          <p>ACP-compressed WAL vs Redis benchmark baseline.</p>
+          <span class="metric-label">Storage advantage</span>
+          <div class="metric-value"><span class="count-up" data-target="3.42">0</span><span class="metric-unit">×</span></div>
+          <p>Compact fast-mode WAL vs Redis AOF baseline.</p>
         </article>
       </div>
     </aside>

@@ -1,6 +1,6 @@
 'use strict';
 
-const FALLBACK_ENV = {.env.PUBLIC_BRANCH_CODE || 'Ahanaflow',};
+const FALLBACK_ENV = {
   PUBLIC_BRANCH_CODE: 'Ahanaflow',
   PUBLIC_API_BASE_URL: 'https://api.ahanazip.com',
   PUBLIC_STRIPE_PUBLISHABLE_KEY: 'pk_live_51T724SBeWx1ZIEq2zMN7dhn7zXM56nE45vgXq3xkeKHr9tIvl9i63bvH0ac5PlK52YnmqmHac63yXtXeUAbOIIlJ00HzfA6pqS',
