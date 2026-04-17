@@ -297,13 +297,15 @@ Monitor your usage at [www.ahanaflow.com/dashboard](https://www.ahanaflow.com/da
 
 For high-volume deployments (10M+ ops/day), the storage savings alone justify the API plan cost.
 
-### 2. Performance (No Overhead)
+### 2. Performance Context
 
-The trained dictionary runs **in-process** — compression/decompression happen in microseconds:
+The trained dictionary runs **in-process** — compression/decompression happen in microseconds. Treat the older embedded throughput note below as implementation context, not as the primary public benchmark boundary for the deploy repo:
 
-- **Throughput:** Same 1.57M ops/s as community tier
+- **Throughput:** same runtime behavior as the community tier in the same embedding mode
 - **Latency:** No added network calls (unlike API-based compression)
 - **CPU:** Minimal increase (~5%) due to dictionary lookups
+
+For current public performance positioning, use `docs/PRODUCTION_READINESS_REPORT.md`.
 
 ### 3. Support & SLA
 

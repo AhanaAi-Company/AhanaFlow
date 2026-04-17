@@ -1,14 +1,14 @@
-# AhanaFlow DB — Compressed State & Event Engine
+# AhanaFlow — Compressed Durable State And Controlled-Deployment Vector Runtime
 
 <div align="center">
 
 ![AhanaFlow Logo](https://www.ahanaflow.com/assets/ahanaflow-logo.png)
 
-**State, Vector Search & Compression in One Runtime**
+**Compressed durable state, integrated vector operations, one runtime**
 
 [![License: Dual](https://img.shields.io/badge/license-Dual%20(Non--Commercial%20%2F%20Commercial)-blue)](./LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![Performance](https://img.shields.io/badge/performance-1.57M%20ops%2Fs%20(in--process)%20%7C%20~125K%20(TCP)-green)](./docs/BENCHMARKS.md)
+[![Performance](https://img.shields.io/badge/performance-47.6k%20req%2Fs%20mixed%20load%20%7C%2046.20ms%20vector%20p99-green)](./docs/PRODUCTION_READINESS_REPORT.md)
 [![Compression](https://img.shields.io/badge/compression-88.7%25-orange)](./docs/COMPRESSION.md)
 
 [Website](https://www.ahanaflow.com) • [Documentation](./docs/) • [API Plans](https://www.ahanaflow.com/#pricing) • [Quick Start](#quick-start)
@@ -19,28 +19,43 @@
 
 ## What is AhanaFlow?
 
-**AhanaFlow** is a Database suite to replace both Sqlite and Redis using a cutting edge **compressed, self-contained state and event streaming engine** built on AhanaAI's Ahana Compression Protocol (ACP). It provides:
+**AhanaFlow** packages two Branch 33 runtimes into one deployable system: UniversalStateServer for compressed durable control-plane state, and VectorStateServerV2 for exact plus HNSW-backed vector retrieval with an explicit public claim boundary. It provides:
 
 - **Key-Value Store** with TTL, atomic counters, and grouped operations
 - **FIFO Queues** for job processing and async workflows  
 - **Event Streams** with append-only, sequence-indexed access
-- **Vector Search** with exact and HNSW approximate nearest-neighbor (billion-scale)
+- **Vector Search** with exact and HNSW-backed retrieval for a bounded controlled-deployment lane
 - **Compressed WAL** with 50-60% (community) or **88.7%** (pro) storage reduction
-- **1.57M ops/s** throughput with runtime-switchable durability modes
+- **Mode-qualified April 16 performance** with `47,642.31 req/sec` mixed load in compact fast-mode and a frozen `46.20 ms` selective vector p99 lane
 - **Zero external dependencies** — no Redis, no managed infra, just drop in as a library
 
 ### Why AhanaFlow?
 
-Replace Redis for workloads that don't need Redis scale:
+Use AhanaFlow when you want one runtime for retained state plus integrated vector operations and the current controlled-deployment boundary fits your workload:
 
 | What You Get | vs Redis | vs SQLite |
 |--------------|----------|-----------|
-| **Performance (in-process)** | 1.57M ops/s (embedded mode) | 1.3× faster than SQLite WAL |
-| **Performance (TCP server)** | 0.94-0.96× Redis (single-key), 1.63× Redis (batched) | N/A |
+| **Compact fast-mode** | 1.157× Redis on the official pipelined KV lane | N/A |
+| **RESP-compatible lane** | Compatibility-first, slower than Redis today | N/A |
 | **Compression** | 88.7% WAL reduction (Pro) | 4.9× smaller than uncompressed |
 | **Features** | KV + TTL + Queues + Streams + Vectors | KV only, no TTL/queues |
-| **Ops Complexity** | Zero — single process | Requires separate Redis server + AUTH/TLS |
+| **Ops Complexity** | One runtime for state + vector packaging | Requires separate Redis server + AUTH/TLS |
 | **Cost** | $0–$499/mo for most use cases | $150–$400/mo for managed Redis |
+
+### Current Claim Boundary
+
+The approved public Branch 33 vector package is intentionally narrow:
+
+1. Approved selective vector lane: `10K` corpus, `M=12`, `ef_construction=32`, `ef_search=24`, filtered 8-bucket query, pipeline depth `2`
+2. Frozen selective result: `46.20 ms` p99 with fallback count `0`
+3. Round 10 confirmed the same lane at `46.97 ms` p99 without widening the claim
+4. Mixed append/query work produced about `33x+` maintenance relief on the bounded maintenance lane
+5. April 9 proof remains public only when stated narrowly: `82K vectors/s` insert throughput and `32,036 docs/s` RAG ingest are not substitutes for concurrent network ANN latency claims
+
+Canonical buyer-facing docs in this repo:
+
+1. `docs/PRODUCTION_READINESS_REPORT.md`
+2. `docs/VECTOR_STATE_SERVER_V2_CLAIM_BOUNDARY.md`
 
 ---
 
@@ -111,7 +126,7 @@ print(result["result"])  # "Hello, AhanaFlow!"
 send_command(sock, {"cmd": "INCR", "key": "counter", "amount": 10})
 
 # Enqueue job
-send_command(sock, {"cmd": "ENQUEUE", "queue": "jobs", "item": {"type": "email", "to": "user@example.com"}})
+send_command(sock, {"cmd": "ENQUEUE", "queue": "jobs", "payload": {"type": "email", "to": "user@example.com"}})
 
 # Dequeue job
 job = send_command(sock, {"cmd": "DEQUEUE", "queue": "jobs"})
@@ -177,7 +192,7 @@ for match in results:
 - Payload compression (up to 60% reduction on retrieval)
 
 **HNSW Approximate Search:**
-- Billion-scale vector indexing
+- Controlled-deployment HNSW lane with measured recall reporting
 - Product Quantization for memory efficiency
 - Configurable recall/speed tradeoff
 - Measured recall@k reporting
@@ -224,7 +239,7 @@ See [docs/DEPLOYMENT_GUIDE.md](./docs/DEPLOYMENT_GUIDE.md) for complete deployme
 
 ## Commercial Use & API Plans
 
-**AhanaFlow is free for non-commercial use.** For commercial deployment, you need an API key from [www.ahanaflow.com](https://www.ahanaflow.com).
+**AhanaFlow is free for non-commercial use.** For commercial deployment, use the current controlled-deployment proof packet and claim-boundary docs in this repo when reviewing fit.
 
 ### Pricing Plans
 
@@ -278,26 +293,24 @@ Measured on AMD Ryzen 9 9900X, 128GB RAM, NVMe SSD:
 
 | Durability Mode | Ops/s | Disk per 20K ops | Latency (p99) |
 |-----------------|-------|------------------|---------------|
-| **fast** | **1.57M** | 584 KB | <1ms |
-| **safe** | 967K | 2,862 KB | <2ms |
-| **strict** | 770K | 2,862 KB | <5ms |
+| **compact fast-mode** | **47,642 req/s mixed load** | 3,835 KB WAL | 1.884 ms |
+| **async RESP** | 25,645 req/s mixed load | 3,861 KB WAL | 6.044 ms |
+| **approved vector lane** | sub-50 ms selective p99 | bounded proof packet | 46.20 ms |
 
-*Benchmark harness: 20,000 iterations of `SET + GET + INCR` with compression enabled, in-process `CompressedStateEngine` (no network overhead).*
+*Use `docs/PRODUCTION_READINESS_REPORT.md` for the current public benchmark boundary. Earlier in-process numbers are not the buyer-safe claim surface for this repo.*
 
 **TCP Server Mode (Hybrid Wire Protocol):**
 
 AhanaFlow auto-detects whether each TCP connection speaks **RESP** (Redis wire protocol) or **compact JSON**, routing to the optimal inlined dispatch path per connection.
 
-| Operation | Throughput | vs Redis |
+| Operation | Throughput | Boundary |
 |-----------|-----------|----------|
-| KV_SET_GET (compact) | ~150K ops/sec | **1.2× (USS wins)** |
-| KV_SET_GET (RESP) | ~125K ops/sec | 0.95× (near parity) |
-| KV_MSET_MGET (batched) | ~365K ops/sec | **1.63× (USS wins)** |
-| KV_PIPELINE (compact) | ~280K ops/sec | **1.4× (USS wins)** |
-| COUNTER_INCR | ~96K ops/sec | 0.96× (near parity) |
-| COUNTER_BATCH_INCR | ~236K ops/sec | **1.63× (USS wins)** |
+| Compact fast-mode mixed load | 47,642 req/sec | buyer-safe KV lane |
+| Compact fast-mode pipelined KV | 295,184 ops/sec | 1.157× Redis vs no-persistence lane |
+| Async RESP pipelined KV | 155,096 ops/sec | compatibility-first lane |
+| Approved vector selective lane | 46.20 ms p99 | bounded `10K / M=12 / ef_construction=32 / ef_search=24` proof |
 
-*Based on April 16, 2026 competitive benchmark with hybrid auto-detect wire protocol. Compact JSON wire achieves 1.2-1.4× Redis throughput; RESP wire maintains drop-in compatibility.*
+*Based on the April 16, 2026 official hotspot packet. Compact fast-mode is the performance lead lane, RESP is the compatibility lane, and vector proof is intentionally bounded.*
 
 **RedisCompatClient — Drop-in Redis Replacement:**
 

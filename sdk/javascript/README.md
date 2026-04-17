@@ -1,8 +1,8 @@
 # ahanaflow — Node.js / JavaScript SDK
 
 > Compressed State & Event Engine by AhanaAI  
-> **In-process engine:** 1.57M ops/s in fast mode (March 30, 2026) · about 1.30x local SQLite WAL NORMAL · about 4.9x smaller WAL than safe/strict  
-> **TCP server mode:** ~125-365K ops/sec depending on operation (network overhead) · near-parity with Redis after April 9 orjson optimization
+> **Public benchmark boundary:** use the April 16 controlled-deployment packet in `docs/PRODUCTION_READINESS_REPORT.md`  
+> **Historical in-process note:** the embedded engine reached 1.57M ops/s on a narrow March 30 harness, but that is not the primary public claim surface for the deploy repo
 
 ## Install
 
@@ -42,9 +42,9 @@ const events = await client.xrange('events', 0, 50);
 const values = await client.mget('key1', 'key2', 'key3');
 
 // Switch durability mode at runtime — no server restart
-// NOTE: These numbers are for in-process CompressedStateEngine.
-// TCP server throughput is ~125-365K ops/sec due to network overhead.
-await client.setDurabilityMode('fast');   // in-process: 1.57M ops/s (March 30, 2026)
+// NOTE: The primary public benchmark boundary for the deploy repo is the April 16
+// controlled-deployment packet, not the historical in-process microbenchmark.
+await client.setDurabilityMode('fast');
 
 await client.close();
 ```
@@ -117,13 +117,11 @@ const client = new AhanaFlowClient({
 
 ## Durability Modes
 
-- `'safe'`: about `967K ops/s`, about `2,862 KB` WAL per `20K` ops, OS-buffered single-record writes.
-- `'fast'`: about `1.57M ops/s`, about `584 KB` WAL per `20K` ops, batched writes with about `50ms` flush cadence.
-- `'strict'`: about `770K ops/s`, about `2,862 KB` WAL per `20K` ops, single-record writes with flush + `fsync`.
+- `'safe'`: OS-buffered single-record writes.
+- `'fast'`: batched writes with about `50ms` flush cadence.
+- `'strict'`: single-record writes with flush + `fsync`.
 
-SQLite WAL NORMAL measured about `1.21M ops/s` on the same `20,000` iteration `SET + GET + INCR` harness.
-
-Measured local competitors in the notebook now also include `dbm.ndbm` (~`1.21M`), `dbm.gnu` (~`1.09M`), SQLite FULL variants (~`680K`), a local `redis-server` configured without persistence (~`55K`), and DuckDB (~`2K`) on the same narrow loop.
+See `docs/PRODUCTION_READINESS_REPORT.md` for the current public claim boundary and `README.md` for the approved vector lane wording.
 
 ```javascript
 await client.setDurabilityMode('fast');  // no restart needed
@@ -134,16 +132,15 @@ await client.setDurabilityMode('fast');  // no restart needed
 ## Performance Notes
 
 **In-Process `CompressedStateEngine`:**
-- **1.57M ops/s** (fast mode, March 30, 2026) - Direct API, no network overhead
+- Historical local microbenchmark only; not the primary public claim boundary for this repo
 - Use when: Embedding state engine in the same process as your Node.js application
 - Ideal for: Single-process applications, libraries, embedded systems
 
 **TCP Server Mode (`AhanaFlowClient` connecting to `universal_server`):**
-- **~125K ops/sec** for single-key operations (KV_SET_GET: 0.95× Redis after April 9 orjson optimization)
-- **~365K ops/sec** for batched operations (KV_MSET_MGET: 1.63× Redis - USS wins)
+- Compact fast-mode and RESP public numbers are maintained in `docs/PRODUCTION_READINESS_REPORT.md`
 - Use when: Multi-process architecture, microservices, remote state access
 - Ideal for: Distributed systems, polyglot access, shared state across services
-- **April 9 evening:** Tail latency blocker fixed (removed 1ms polling timeout from readers-writer lock)
+- Vector claim boundary is maintained in `docs/VECTOR_STATE_SERVER_V2_CLAIM_BOUNDARY.md`
 
 ---
 

@@ -6,12 +6,12 @@
   <title>AhanaFlow — State, Vector Search &amp; Compression in One Runtime</title>
   <meta
     name="description"
-    content="AhanaFlow replaces Redis + Pinecone + custom glue with one compressed, self-hosted runtime. KV, queues, streams, vector retrieval, and 88.7% smaller persisted footprint."
+    content="AhanaFlow consolidates compressed durable state and integrated vector operations for control-plane workloads. Official April 16 harness: 1.157× Redis on pipelined KV in compact fast-mode and 3.42× smaller WAL than Redis AOF."
   />
-  <meta property="og:title" content="AhanaFlow — The Only Runtime That Compresses While It Persists" />
+  <meta property="og:title" content="AhanaFlow — Compressed Durable State, Integrated Vector Operations" />
   <meta
     property="og:description"
-    content="Stop managing five separate data services. AhanaFlow gives AI products, SaaS backends, and embedded systems one compact platform for state, retrieval, and durable storage."
+    content="Buyer-safe April 16 proof: compact fast-mode measured 47.6k req/s mixed load, 1.157× Redis on pipelined KV, and 3.42× smaller WAL than Redis AOF. RESP compatibility and vector boundaries are stated honestly."
   />
   <meta property="og:type" content="website" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌺</text></svg>" />
@@ -443,6 +443,7 @@
       </button>
       <div class="nav-links" id="nav-links">
         <a href="#platform">Platform</a>
+        <a href="#modes">How It Works</a>
         <a href="#compare">Compare</a>
         <a href="#pricing">Pricing</a>
         <a href="#proof">Proof</a>
@@ -460,23 +461,27 @@
       <div class="hero-orbit hero-orbit-b"></div>
       <div class="shell hero-grid">
         <div class="hero-copy reveal">
-          <p class="eyebrow">AhanaFlow by AhanaAI &nbsp;·&nbsp; State &nbsp;·&nbsp; Vector Search &nbsp;·&nbsp; Compression</p>
-          <h1>Stop running five data services. Run one.</h1>
+          <p class="eyebrow">AhanaFlow by AhanaAI &nbsp;·&nbsp; Controlled Deployment Ready &nbsp;·&nbsp; April 16 Benchmarks</p>
+          <h1>Compressed durable state.<br />Integrated vector operations.<br />One runtime.</h1>
           <p class="hero-lead">
-            Redis for caching. Pinecone for vectors. A queue service. Custom persistence glue. AhanaFlow replaces the fragmented stack with one compressed, self-hosted runtime — <strong>1M+ GET ops/s</strong>, perfect vector recall, <strong>88.7% smaller persisted footprint</strong>, and 100% integrity verification, all in a single deployable platform.
+            AhanaFlow combines UniversalStateServer and VectorStateServerV2 for teams that want fewer moving parts in control-plane workloads. On the official April 16 harness, the compact fast-mode lane measured <strong>47.6k req/s mixed load</strong>, <strong>1.157× Redis</strong> on pipelined KV, and <strong>3.42× smaller WAL</strong> than Redis AOF. Vector packaging is kept honest: the approved public lane is a <strong>sub-50 ms</strong> selective `10K / M=12 / ef_construction=32 / ef_search=24` packet with fallback <strong>0</strong>, while broad fast-ANN claims remain out of scope.
           </p>
           <div class="story-grid">
             <article class="story-card story-card-proof">
-              <span class="story-kicker">88.7% Smaller</span>
-              <p><strong>Persisted footprint</strong> vs the Redis comparison benchmark. Smaller backups, faster restores, lower egress — the compression advantage is real and verified.</p>
+              <span class="story-kicker">3.42× Smaller WAL</span>
+              <p><strong>Compact fast-mode WAL</strong> measured 3,835 KB versus 13,116 KB for Redis AOF on the April 16 storage benchmark.</p>
             </article>
             <article class="story-card">
               <span class="story-kicker">One Runtime</span>
-              <p><strong>KV, counters, queues, streams, and vector search</strong> in a single deployable package. No stitching, no separate billing surface, no cloud lock-in.</p>
+              <p><strong>KV, counters, queues, streams, and integrated vector operations</strong> in one deployable package for selected workloads where operational simplicity matters.</p>
             </article>
             <article class="story-card">
-              <span class="story-kicker">Validated Performance</span>
-              <p><strong>1M+ GET ops/s</strong> at sub-millisecond p99. Perfect HNSW recall @ 5K vectors. 32K docs/s RAG ingest with 100% integrity verification.</p>
+              <span class="story-kicker">Mode-Qualified Performance</span>
+              <p><strong>47,642 req/s mixed load</strong> at 1.884 ms p99 in compact fast-mode. The RESP-compatible lane measured 25,645 req/s at 6.044 ms p99.</p>
+            </article>
+            <article class="story-card">
+              <span class="story-kicker">Vector Boundary</span>
+              <p><strong>46.20 ms</strong> selective vector p99 with fallback <strong>0</strong> on the approved 10K lane. April 9 insert and RAG numbers stay public, but they are not marketed as broad concurrent ANN latency proof.</p>
             </article>
             <article class="story-card">
               <span class="story-kicker">Security Included</span>
@@ -486,30 +491,31 @@
           <div class="hero-rail" aria-label="Platform capabilities">
             <span>Compressed durable WAL</span>
             <span>KV · TTL · counters · queues · streams</span>
-            <span>Built-in vector retrieval</span>
+            <span>Exact + HNSW vector operations</span>
             <span>API key authentication</span>
             <span>Replay-safe crash recovery</span>
+            <span>RESP-compatible async lane</span>
             <span>Self-hosted &amp; edge ready</span>
           </div>
           <div class="hero-actions">
-            <a class="button button-primary" href="#pricing">See Pricing</a>
-            <a class="button button-primary" href="#compare">See How We Compare</a>
+            <a class="button button-primary" href="#proof">See The Current Proof</a>
+            <a class="button button-primary" href="#compare">See Where It Fits</a>
             <a class="button button-ghost" href="mailto:jeremiah@ahanazip.com?subject=AhanaFlow%20Deployment%20Inquiry">Talk to the Team</a>
           </div>
           <div class="hero-trust" aria-label="Trust signals">
-            <span>1M+ GET ops/s</span>
-            <span>&lt;0.003ms GET p99</span>
-            <span>2.08ms HNSW p50 @ 10K</span>
-            <span>32K docs/s RAG ingest</span>
-            <span>100% SHA-256 verified</span>
-            <span>88.7% smaller footprint</span>
+            <span>47.6k req/s mixed load</span>
+            <span>1.884 ms p99</span>
+            <span>1.157× Redis pipeline</span>
+            <span>3.42× smaller WAL</span>
+            <span>46.20 ms selective vector p99</span>
+            <span>Controlled deployment ready</span>
           </div>
         </div>
 
         <aside class="hero-panel reveal">
           <!-- Stack consolidation visual -->
           <div class="hero-visual">
-            <svg class="hero-viz-svg" viewBox="0 0 400 310" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="AhanaFlow replaces five fragmented services with one runtime">
+            <svg class="hero-viz-svg" viewBox="0 0 400 310" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="AhanaFlow consolidates state and vector operations for selected workloads">
               <defs>
                 <radialGradient id="gAhana" cx="50%" cy="50%" r="50%">
                   <stop offset="0%" stop-color="#d85b45" stop-opacity="0.35"/>
@@ -574,14 +580,14 @@
           <!-- Compact metric strip -->
           <div class="metric-grid">
             <article class="metric-card metric-card-primary">
-              <span class="metric-label">GET throughput @ 4KB</span>
-              <div class="metric-value"><span class="count-up" data-target="1006">0</span><span class="metric-unit">K ops/s</span></div>
-              <p>Over 1 million GET operations per second with sub-millisecond p99 latency.</p>
+              <span class="metric-label">Mixed-load throughput</span>
+              <div class="metric-value"><span class="count-up" data-target="47.6">0</span><span class="metric-unit">K req/s</span></div>
+              <p>Official April 16 compact fast-mode lane for control-plane traffic.</p>
             </article>
             <article class="metric-card">
-              <span class="metric-label">Footprint reduction</span>
-              <div class="metric-value"><span class="count-up" data-target="88.7">0</span><span class="metric-unit">%</span></div>
-              <p>Compressed WAL — 8.8× smaller persisted footprint vs the Redis benchmark.</p>
+              <span class="metric-label">Storage advantage</span>
+              <div class="metric-value"><span class="count-up" data-target="3.42">0</span><span class="metric-unit">×</span></div>
+              <p>Compact fast-mode WAL measured 3.42× smaller than Redis AOF.</p>
             </article>
           </div>
         </aside>
@@ -592,20 +598,20 @@
     <div class="stats-band">
       <div class="shell stats-band-grid">
         <div class="stats-band-stat">
-          <span class="stats-band-num c-brand">1M+</span>
-          <span class="stats-band-label">GET ops/s @ 4KB payload</span>
+          <span class="stats-band-num c-brand">47.6K</span>
+          <span class="stats-band-label">mixed-load req/s</span>
         </div>
         <div class="stats-band-stat">
-          <span class="stats-band-num c-teal">88.7%</span>
-          <span class="stats-band-label">smaller persisted footprint</span>
+          <span class="stats-band-num c-teal">3.42×</span>
+          <span class="stats-band-label">smaller WAL vs Redis AOF</span>
         </div>
         <div class="stats-band-stat">
-          <span class="stats-band-num c-gold">&lt;1ms</span>
-          <span class="stats-band-label">GET p99 latency</span>
+          <span class="stats-band-num c-gold">1.157×</span>
+          <span class="stats-band-label">Redis on compact pipeline</span>
         </div>
         <div class="stats-band-stat">
-          <span class="stats-band-num c-white">1</span>
-          <span class="stats-band-label">runtime replaces five services</span>
+          <span class="stats-band-num c-white">CD</span>
+          <span class="stats-band-label">controlled deployment ready</span>
         </div>
       </div>
     </div>
@@ -640,7 +646,7 @@
               <li>Exact and indexed retrieval modes</li>
               <li>One operational surface for state and search</li>
               <li>Natural fit for RAG memory and semantic lookup</li>
-              <li>Simpler local, private-cloud, and edge deployment paths</li>
+              <li>Simpler local, private, sidecar, and edge deployment paths</li>
             </ul>
           </article>
           <article class="verdict-card verdict-card-positive">
@@ -651,7 +657,7 @@
               <li>Smaller retained state for backups and replication</li>
               <li>Lower bandwidth burden during recovery flows</li>
               <li>More practical embedded persistence</li>
-              <li>Proven 88.7% reduction on the published Redis comparison benchmark</li>
+              <li>3.42× smaller WAL vs Redis AOF on the April 16 compact fast-mode storage benchmark</li>
             </ul>
           </article>
           <article class="verdict-card verdict-card-positive">
@@ -691,14 +697,134 @@
       </div>
     </section>
 
+    <section class="section protocol-section" id="modes">
+      <div class="shell">
+        <div class="section-head reveal">
+          <p class="eyebrow">How It Works</p>
+          <h2>Hybrid mode, compact mode, RESP, and WAL explained in plain English.</h2>
+          <p>
+            Visitors should not have to reverse-engineer our protocol story from benchmark tables. Hybrid mode is the traffic router, compact mode is the faster AhanaFlow-native wire path, RESP is the Redis-readable wire path, and WAL is the on-disk persistence layer they can both write into.
+          </p>
+        </div>
+
+        <div class="benchmark-spotlight reveal">
+          <div class="spotlight-copy router-visual">
+            <p class="eyebrow">Words + Picture</p>
+            <h3>One listener, two wire paths, one durable state engine.</h3>
+            <svg class="router-svg" viewBox="0 0 760 280" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Hybrid mode routes incoming traffic to compact or RESP, then writes durable state into the WAL">
+              <rect x="18" y="94" width="146" height="76" rx="20" fill="#fff8ef" stroke="#d8cdbd"/>
+              <text x="91" y="126" text-anchor="middle" font-size="22" font-family="Space Grotesk, sans-serif" font-weight="700" fill="#14233b">Client</text>
+              <text x="91" y="149" text-anchor="middle" font-size="13" font-family="Space Grotesk, sans-serif" fill="#425471">redis-cli, redis-py,</text>
+              <text x="91" y="166" text-anchor="middle" font-size="13" font-family="Space Grotesk, sans-serif" fill="#425471">or native compact client</text>
+
+              <line x1="164" y1="132" x2="246" y2="132" stroke="#d85b45" stroke-width="4"/>
+              <polygon points="246,132 231,124 231,140" fill="#d85b45"/>
+
+              <rect x="248" y="64" width="166" height="136" rx="24" fill="#fff3ee" stroke="#d85b45" stroke-width="2"/>
+              <text x="331" y="100" text-anchor="middle" font-size="23" font-family="Space Grotesk, sans-serif" font-weight="800" fill="#a93b31">Hybrid Mode</text>
+              <text x="331" y="126" text-anchor="middle" font-size="13" font-family="Space Grotesk, sans-serif" fill="#425471">auto-detects the incoming wire format</text>
+              <text x="331" y="145" text-anchor="middle" font-size="13" font-family="Space Grotesk, sans-serif" fill="#425471">and routes traffic to the matching handler</text>
+              <text x="331" y="174" text-anchor="middle" font-size="12" font-family="IBM Plex Mono, monospace" fill="#a93b31">compact frame  → native lane</text>
+              <text x="331" y="192" text-anchor="middle" font-size="12" font-family="IBM Plex Mono, monospace" fill="#a93b31">RESP frame     → Redis-readable lane</text>
+
+              <line x1="414" y1="108" x2="490" y2="86" stroke="#167d78" stroke-width="4"/>
+              <polygon points="490,86 475,81 479,95" fill="#167d78"/>
+              <line x1="414" y1="156" x2="490" y2="156" stroke="#c7952d" stroke-width="4"/>
+              <polygon points="490,156 475,148 475,164" fill="#c7952d"/>
+
+              <rect x="492" y="34" width="122" height="78" rx="18" fill="#eefaf8" stroke="#167d78"/>
+              <text x="553" y="64" text-anchor="middle" font-size="19" font-family="Space Grotesk, sans-serif" font-weight="700" fill="#167d78">Compact</text>
+              <text x="553" y="86" text-anchor="middle" font-size="12" font-family="Space Grotesk, sans-serif" fill="#425471">AhanaFlow-native</text>
+              <text x="553" y="101" text-anchor="middle" font-size="12" font-family="Space Grotesk, sans-serif" fill="#425471">lower overhead path</text>
+
+              <rect x="492" y="118" width="122" height="78" rx="18" fill="#fff7e9" stroke="#c7952d"/>
+              <text x="553" y="148" text-anchor="middle" font-size="19" font-family="Space Grotesk, sans-serif" font-weight="700" fill="#9a6b12">RESP</text>
+              <text x="553" y="170" text-anchor="middle" font-size="12" font-family="Space Grotesk, sans-serif" fill="#425471">Redis-readable</text>
+              <text x="553" y="185" text-anchor="middle" font-size="12" font-family="Space Grotesk, sans-serif" fill="#425471">migration path</text>
+
+              <line x1="614" y1="74" x2="674" y2="74" stroke="#14233b" stroke-width="4"/>
+              <line x1="614" y1="158" x2="674" y2="158" stroke="#14233b" stroke-width="4"/>
+              <line x1="674" y1="74" x2="674" y2="205" stroke="#14233b" stroke-width="4"/>
+              <polygon points="674,205 666,190 682,190" fill="#14233b"/>
+
+              <rect x="620" y="210" width="120" height="48" rx="16" fill="#eaf0fb" stroke="#586c8d"/>
+              <text x="680" y="230" text-anchor="middle" font-size="18" font-family="Space Grotesk, sans-serif" font-weight="700" fill="#14233b">WAL</text>
+              <text x="680" y="247" text-anchor="middle" font-size="12" font-family="Space Grotesk, sans-serif" fill="#425471">durable on-disk log</text>
+            </svg>
+            <p class="router-note"><strong>Read it left to right:</strong> the client sends traffic into hybrid mode, hybrid mode decides whether the bytes are compact or RESP, the matching lane handles the request, and successful state changes persist into the WAL. <strong>WAL is storage; RESP is protocol.</strong></p>
+          </div>
+
+          <div class="spotlight-stats" aria-label="Protocol guide">
+            <article>
+              <strong>Hybrid</strong>
+              <span>Auto-detect router. Not a third protocol, just the decision point.</span>
+            </article>
+            <article>
+              <strong>Compact</strong>
+              <span>Faster AhanaFlow-native wire path used for our best throughput numbers.</span>
+            </article>
+            <article>
+              <strong>RESP</strong>
+              <span>Redis-readable wire path used for migration, interoperability, and existing Redis clients.</span>
+            </article>
+            <article>
+              <strong>WAL</strong>
+              <span>Write-ahead log on disk. It is about durability and recovery, not wire compatibility.</span>
+            </article>
+          </div>
+        </div>
+
+        <div class="protocol-grid reveal">
+          <article class="protocol-card">
+            <span class="summary-kicker">Hybrid Mode</span>
+            <h3>The listener that makes both client styles possible.</h3>
+            <p>
+              Hybrid mode listens on one server port and inspects the incoming bytes. If the client is speaking RESP, it routes the request into the Redis-readable handler. If the client is speaking compact frames, it routes into the native fast path.
+            </p>
+            <ul>
+              <li>Best when you want one endpoint for both migration traffic and native traffic</li>
+              <li>Lets redis-cli and redis-py talk to the same listener used by native AhanaFlow clients</li>
+              <li>Keeps the protocol decision in the server instead of forcing the operator to run two separate ports</li>
+            </ul>
+          </article>
+
+          <article class="protocol-card">
+            <span class="summary-kicker">Compact Path</span>
+            <h3>The native path for lower overhead and stronger throughput.</h3>
+            <p>
+              Compact mode is not Redis wire protocol. It is our own lighter-weight transport with lower parsing overhead, which is why the April 16 compact fast-mode lane is the one that beats Redis on the official pipelined KV benchmark.
+            </p>
+            <div class="route-pills">
+              <span>AhanaFlow-native</span>
+              <span>best current speed lane</span>
+              <span>not redis-cli wire format</span>
+            </div>
+          </article>
+
+          <article class="protocol-card">
+            <span class="summary-kicker">RESP + WAL</span>
+            <h3>Redis-readable traffic can still land in compressed durable storage.</h3>
+            <p>
+              RESP and WAL solve different problems. RESP is the network format a Redis client speaks. WAL is the on-disk log the server writes for durability. A Redis-shaped request can arrive over RESP and still end up persisted into AhanaFlow's compressed WAL.
+            </p>
+            <div class="command-list">
+              <div><code>RESP</code><span>wire protocol for clients and tools</span></div>
+              <div><code>WAL</code><span>write-ahead log for recovery, replay, and storage efficiency</span></div>
+              <div><code>Hybrid</code><span>router that decides which protocol handler runs</span></div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
     <!-- ═══════════════════════════════════════════ COMPARE ══════════════════════════════════════════ -->
     <section class="section benchmark-section" id="compare">
       <div class="shell">
         <div class="section-head reveal">
           <p class="eyebrow">Competitive Comparison</p>
-          <h2>One runtime. Everything the fragmented stack still can't give you.</h2>
+          <h2>One runtime for the parts of your stack that benefit from consolidation.</h2>
           <p>
-            Today's teams running AI products manage five separate services: Redis for cache, Pinecone or Qdrant for vectors, a queue service, a WAL solution, and custom glue to tie them together. AhanaFlow consolidates the entire stack — with built-in compression that none of those platforms offer.
+            Many AI and SaaS teams end up stitching together Redis, a separate vector system, queues, and persistence glue for selected workloads. AhanaFlow is the tighter option when retained-state cost, operational simplicity, and self-hosted control matter more than chasing every specialized feature across multiple products.
           </p>
         </div>
 
@@ -763,7 +889,7 @@
                 <td><span class="chk-part">Complex setup</span></td>
               </tr>
               <tr>
-                <td class="row-label">Compressed WAL (88.7% smaller)</td>
+                <td class="row-label">Compressed WAL storage advantage</td>
                 <td class="col-ahana"><span class="chk-yes">✓</span></td>
                 <td><span class="chk-no">—</span></td>
                 <td><span class="chk-no">—</span></td>
@@ -772,7 +898,7 @@
                 <td><span class="chk-no">—</span></td>
               </tr>
               <tr>
-                <td class="row-label">Self-hosted, no cloud lock-in</td>
+                <td class="row-label">Self-hosted deployment path</td>
                 <td class="col-ahana"><span class="chk-yes">✓</span></td>
                 <td><span class="chk-yes">✓</span></td>
                 <td><span class="chk-no">—</span></td>
@@ -824,9 +950,9 @@
         <div class="reveal" style="margin-top: 60px;">
           <div class="section-head">
             <p class="eyebrow">Performance Deep Dive</p>
-            <h2>AhanaFlow is 2-10× faster than Redis on key operations.</h2>
+            <h2>The current Redis comparison is real, but it is mode-specific.</h2>
             <p>
-              Based on our April 9, 2026 benchmark runs compared to documented Redis production performance, AhanaFlow outperforms Redis on the operations that matter most for control-plane workloads — while delivering 88.7% smaller persisted footprint.
+              The buyer-safe April 16 boundary is narrow and explicit. Compact fast-mode beats managed Redis on the official pipelined KV lane and wins materially on WAL footprint. The RESP-compatible lane remains slower than Redis, and those differences are part of the product story rather than something we hide.
             </p>
           </div>
 
@@ -842,34 +968,34 @@
               </thead>
               <tbody>
                 <tr>
-                  <td class="row-label">GET @ 4KB payload</td>
-                  <td class="col-ahana"><strong>1,006,062 ops/s</strong></td>
-                  <td>100K-500K ops/s</td>
-                  <td style="color:#167d78; font-weight:700;">AhanaFlow 2-10×</td>
+                  <td class="row-label">Mixed load, compact fast-mode</td>
+                  <td class="col-ahana"><strong>47,642.31 req/s @ 1.884 ms p99</strong></td>
+                  <td>Managed Redis not measured on the same mixed packet</td>
+                  <td style="color:#167d78; font-weight:700;">Buyer-safe fast lane</td>
                 </tr>
                 <tr>
-                  <td class="row-label">GET p99 latency</td>
-                  <td class="col-ahana"><strong>0.001 ms</strong></td>
-                  <td>0.1-1.0 ms (w/ persistence)</td>
-                  <td style="color:#167d78; font-weight:700;">AhanaFlow 100-1000×</td>
+                  <td class="row-label">KV pipeline, compact fast-mode</td>
+                  <td class="col-ahana"><strong>295,183.83 ops/s</strong></td>
+                  <td>255,109.55 ops/s (managed Redis, no persistence)</td>
+                  <td style="color:#167d78; font-weight:700;">AhanaFlow 1.157×</td>
                 </tr>
                 <tr>
-                  <td class="row-label">SET @ 64B payload</td>
-                  <td class="col-ahana"><strong>166,471 ops/s</strong></td>
-                  <td>80K-200K ops/s</td>
-                  <td style="color:#8fa0bc;">Competitive</td>
+                  <td class="row-label">KV pipeline, async RESP</td>
+                  <td class="col-ahana"><strong>155,096.15 ops/s</strong></td>
+                  <td>223,117.22 ops/s (managed Redis)</td>
+                  <td style="color:#8fa0bc;">Compatibility lane</td>
                 </tr>
                 <tr>
-                  <td class="row-label">INCR (atomic counter)</td>
-                  <td class="col-ahana"><strong>344K-416K ops/s</strong></td>
-                  <td>100K-300K ops/s</td>
-                  <td style="color:#167d78; font-weight:700;">AhanaFlow 1.5-4×</td>
+                  <td class="row-label">WAL footprint vs Redis AOF</td>
+                  <td class="col-ahana"><strong>3,835 KB</strong></td>
+                  <td>13,116 KB</td>
+                  <td style="color:#167d78; font-weight:700;">AhanaFlow 3.42× smaller</td>
                 </tr>
                 <tr>
-                  <td class="row-label">Persisted footprint</td>
-                  <td class="col-ahana"><strong>0.57 MB (88.7% smaller)</strong></td>
-                  <td>5.00 MB</td>
-                  <td style="color:#167d78; font-weight:700;">AhanaFlow 8.8×</td>
+                  <td class="row-label">RESP lane WAL vs Redis AOF</td>
+                  <td class="col-ahana"><strong>3,861 KB</strong></td>
+                  <td>7,994 KB</td>
+                  <td style="color:#167d78; font-weight:700;">AhanaFlow 2.07× smaller</td>
                 </tr>
               </tbody>
             </table>
@@ -877,24 +1003,24 @@
 
           <div class="benchmark-spotlight" style="margin-top: 32px;">
             <div class="spotlight-copy">
-              <p class="eyebrow">Why AhanaFlow is Faster</p>
-              <h3>In-process architecture with zero network overhead.</h3>
+              <p class="eyebrow">How To Read The Numbers</p>
+              <h3>The win is strongest on compact fast-mode and storage, not on every protocol path.</h3>
               <p>
-                Our benchmarks measure the Python engine API directly — no network serialization, no client/server round trips, no protocol overhead. Redis benchmarks typically include network latency. For workloads where the database runs in-process with your application (embedded systems, edge devices, single-machine deployments), AhanaFlow's architecture delivers dramatically lower latency.
+                The April 16 hotspot report is the canonical public boundary. Compact fast-mode is the performance lead lane for pipelined KV and WAL storage efficiency. The async RESP lane exists to preserve Redis compatibility, not to claim blanket Redis replacement. Vector operations are included, but broad fast-ANN marketing is still intentionally blocked.
               </p>
             </div>
             <div class="spotlight-stats">
               <article>
-                <strong>0.001 ms</strong>
-                <span>GET p99 latency — 100-1000× faster than Redis with persistence</span>
+                <strong>1.157× Redis</strong>
+                <span>compact fast-mode on the official pipelined KV lane</span>
               </article>
               <article>
-                <strong>1M+ ops/s</strong>
-                <span>GET throughput @ 4KB — 2-10× faster than Redis in-memory</span>
+                <strong>3.42× smaller</strong>
+                <span>WAL versus Redis AOF on the compact fast-mode storage benchmark</span>
               </article>
               <article>
-                <strong>8.8× smaller</strong>
-                <span>persisted footprint — structural advantage Redis cannot match</span>
+                <strong>0.695× Redis</strong>
+                <span>RESP pipeline throughput today, in exchange for protocol compatibility</span>
               </article>
             </div>
           </div>
@@ -904,64 +1030,64 @@
         <div class="vs-grid reveal">
           <article class="vs-card">
             <span class="vs-card-tag">AhanaFlow vs Redis</span>
-            <h3>All the state primitives. A fraction of the storage. 2-10× faster on key operations.</h3>
-            <p>Redis is the gold standard for in-memory KV, counters, and streams — but it was designed for speed, not footprint. Its persistence formats are not compressed.</p>
+            <h3>State, counters, queues, and compressed persistence with a narrower claim surface.</h3>
+            <p>Redis is still the reference point for mature in-memory data structures. AhanaFlow is the better fit when you value retained-state cost, self-hosted simplicity, and one runtime for operational state plus integrated vector operations.</p>
             <ul>
-              <li>AhanaFlow: <strong>0.57 MB</strong> persisted vs Redis baseline <strong>5.00 MB</strong> — that's 8.8× smaller.</li>
-              <li><strong>1M+ GET ops/s</strong> — 2-10× faster than Redis in-memory (see speed comparison above).</li>
-              <li>Includes the same KV, TTL, counters, queues, and streams Redis is known for.</li>
-              <li>Adds built-in vector retrieval without a separate module install.</li>
-              <li>Reduces backup, replication, and cold-start costs dramatically.</li>
+              <li><strong>3.42× smaller WAL</strong> than Redis AOF on the current compact fast-mode storage benchmark.</li>
+              <li><strong>1.157× Redis</strong> on the official compact fast-mode pipelined KV lane.</li>
+              <li>Includes KV, TTL, counters, queues, and streams in the same runtime.</li>
+              <li>RESP compatibility exists, but that lane is slower today and presented honestly.</li>
+              <li>Reduces backup, replication, and retained-state costs materially.</li>
             </ul>
-            <span class="vs-win">Winning on: storage economics + speed + unified platform</span>
+            <span class="vs-win">Best fit: control-plane state + retained-state economics</span>
           </article>
           <article class="vs-card">
             <span class="vs-card-tag">AhanaFlow vs Pinecone</span>
-            <h3>Vector search included — without the cloud-only price tag.</h3>
-            <p>Pinecone is impressive for pure vector workloads at scale, but it's exclusively cloud-hosted and adds a vendor billing relationship for every query your product makes.</p>
+            <h3>Integrated vector operations when you do not want a separate managed vector bill.</h3>
+            <p>Pinecone is optimized for dedicated vector infrastructure at scale. AhanaFlow is for teams that want retrieval adjacent to operational state inside one deployable runtime.</p>
             <ul>
               <li>AhanaFlow is fully self-hosted — deploy privately, on-prem, or at the edge.</li>
-              <li>Covers KV, state, queues, and streams that Pinecone doesn't touch.</li>
-              <li>No per-query pricing — ideal for high-frequency AI lookup patterns.</li>
-              <li>One runtime for your entire data layer vs two separate products.</li>
+              <li>Covers KV, state, queues, and streams that Pinecone does not target.</li>
+              <li>Fits embedded, sidecar, and customer-controlled environments.</li>
+              <li>Best where you value operational consolidation over specialist vector scale.</li>
             </ul>
-            <span class="vs-win">Winning on: self-hosted control + total cost</span>
+            <span class="vs-win">Best fit: self-hosted retrieval plus state</span>
           </article>
           <article class="vs-card">
             <span class="vs-card-tag">AhanaFlow vs Qdrant</span>
-            <h3>Vector retrieval plus all the state primitives it's missing.</h3>
-            <p>Qdrant is a strong open-source vector engine built in Rust, but it's exclusively a vector store — no KV, no counters, no queues, no streams. You still need Redis alongside it.</p>
+            <h3>Operational state and retrieval together, with storage efficiency on retained data.</h3>
+            <p>Qdrant is a focused vector engine. AhanaFlow is the broader control-plane runtime when you want vectors, counters, queues, and durable state handled together.</p>
             <ul>
-              <li>AhanaFlow replaces both Qdrant and the cache layer you'd need to run next to it.</li>
-              <li>Compressed WAL with 88.7% smaller footprint — Qdrant has no equivalent.</li>
+              <li>Eliminates the need to stitch a separate cache or queue service into the same deployment for selected workloads.</li>
+              <li>Compressed WAL creates a measurable storage advantage on retained state.</li>
               <li>Rate limiting and auth built into the runtime, not layered on externally.</li>
-              <li>Single deployment story for AI control planes instead of two separate services.</li>
+              <li>Single deployment story for AI control planes and internal product infrastructure.</li>
             </ul>
-            <span class="vs-win">Winning on: operational simplicity + storage</span>
+            <span class="vs-win">Best fit: operational simplicity + retained-state cost</span>
           </article>
           <article class="vs-card">
             <span class="vs-card-tag">AhanaFlow vs Weaviate</span>
-            <h3>Purpose-built state management — not bolted onto a vector store.</h3>
-            <p>Weaviate is a capable AI-native vector and object store, but it's optimized for search — not for the operational state your product needs to run reliably: counters, queues, rate controls, metered access.</p>
+            <h3>Purpose-built operational state with integrated retrieval, not retrieval first.</h3>
+            <p>Weaviate is a capable search-oriented platform. AhanaFlow is stronger where counters, queues, TTL state, and replay-safe persistence are part of the core workload, not an afterthought.</p>
             <ul>
               <li>AhanaFlow was designed as a control-plane database from the ground up.</li>
               <li>Atomic counters, TTL-expiring keys, queues, and streams are first-class primitives.</li>
-              <li>88.7% smaller persisted footprint with no reduction in correctness or durability.</li>
-              <li>Self-hosted with a clean single-runtime deployment story vs a managed cloud service.</li>
+              <li>Storage efficiency is a measured differentiator on retained state.</li>
+              <li>Self-hosted with a clean single-runtime deployment story.</li>
             </ul>
-            <span class="vs-win">Winning on: control-plane fit + compression</span>
+            <span class="vs-win">Best fit: control-plane fit + compression-aware persistence</span>
           </article>
           <article class="vs-card">
             <span class="vs-card-tag">AhanaFlow vs MongoDB Atlas</span>
-            <h3>The simplicity of a focused runtime vs a full document platform.</h3>
-            <p>MongoDB Atlas is a mature, full-featured document database — but its vector search is an add-on module, its operational footprint is large, and hosting it yourself carries significant complexity.</p>
+            <h3>The simplicity of a focused runtime versus a general-purpose document platform.</h3>
+            <p>MongoDB Atlas is broader and more feature-rich. AhanaFlow is the narrower choice when your application needs durable operational state, compact persistence, and retrieval without adopting a full document platform footprint.</p>
             <ul>
-              <li>AhanaFlow is purpose-built for AI control-plane workloads: lean, fast, and compressed.</li>
+              <li>AhanaFlow is purpose-built for AI control-plane workloads: lean, durable, and compressed.</li>
               <li>No schema management, no aggregation pipelines, no cluster topology to reason about.</li>
-              <li>8.8× smaller persisted footprint than the Redis baseline — dramatically outperforms MongoDB's persistence format for state-heavy workloads.</li>
+              <li>Measured WAL efficiency favors AhanaFlow in retained-state-heavy workloads.</li>
               <li>Genuinely embedded and edge friendly; Atlas requires separate Atlas Edge configuration.</li>
             </ul>
-            <span class="vs-win">Winning on: simplicity + embedded deployment</span>
+            <span class="vs-win">Best fit: simplicity + embedded deployment</span>
           </article>
         </div>
 
@@ -969,23 +1095,23 @@
         <div class="benchmark-spotlight reveal" style="margin-top: 48px;">
           <div class="spotlight-copy">
             <p class="eyebrow">The Core Advantage</p>
-            <h3>Compression is a moat no competitor has crossed. Performance is table-stakes.</h3>
+            <h3>Storage efficiency and consolidation are the core differentiators, with the qualifiers included.</h3>
             <p>
-              Redis, Pinecone, Qdrant, Weaviate, and MongoDB all write raw or minimally compressed bytes to disk. AhanaFlow's compressed WAL delivers an <strong>88.7% reduction in persisted footprint</strong> — a structural advantage that pays dividends every time you back up, replicate, restore, or move data. <strong>And</strong> it delivers 1M+ GET ops/s with sub-millisecond p99 latency, perfect vector recall at scale, and 32K docs/s RAG ingest with cryptographic integrity verification on every payload.
+              AhanaFlow's strongest public advantages today are <strong>mode-qualified Redis pipeline performance</strong>, <strong>measured WAL storage reduction</strong>, and <strong>one runtime for control-plane state plus integrated vector operations</strong>. Those wins do not erase every tradeoff: the RESP lane is slower than Redis today, and broad fast-ANN claims are intentionally off the page.
             </p>
           </div>
           <div class="spotlight-stats" aria-label="Key differentiators">
             <article>
-              <strong>8.8× smaller</strong>
-              <span>persisted footprint vs Redis benchmark baseline</span>
+              <strong>3.42× smaller</strong>
+              <span>compact fast-mode WAL versus Redis AOF</span>
             </article>
             <article>
-              <strong>1M+ ops/s</strong>
-              <span>GET throughput @ 4KB with 0.001ms p99 latency</span>
+              <strong>1.157× Redis</strong>
+              <span>official compact fast-mode pipeline result</span>
             </article>
             <article>
-              <strong>100% integrity</strong>
-              <span>SHA-256 verified roundtrip on every compressed payload</span>
+              <strong>RESP included</strong>
+              <span>compatibility lane present, with honest throughput boundaries</span>
             </article>
           </div>
         </div>
@@ -996,9 +1122,9 @@
       <div class="shell">
         <div class="section-head reveal">
           <p class="eyebrow">Pricing</p>
-          <h2>Simple pricing for teams replacing multiple data services with one runtime.</h2>
+          <h2>Simple pricing for teams evaluating one runtime for state, retrieval, and retained-state efficiency.</h2>
           <p>
-            Start free with the self-hosted core. Move to AhanaFlow Cloud when you want managed capacity, support, and a faster commercial rollout. Paid plans route through Stripe-hosted checkout, and existing customers can recover keys through the license portal.
+            Start with the self-hosted core. Move to a commercial plan when you want licensing, support, and a faster rollout path. Paid plans route through Stripe-hosted checkout, and existing customers can recover keys through the license portal.
           </p>
         </div>
 
@@ -1090,13 +1216,13 @@
         <div class="section-head reveal">
           <p class="eyebrow">Use Cases</p>
           <h2>Built for the workloads where compression and simplicity create the most leverage.</h2>
-          <p>AhanaFlow is the clear choice when your team needs durable operational state, vector retrieval, and a storage footprint that won't become a cost center.</p>
+          <p>AhanaFlow is strongest where durable operational state, integrated retrieval, and retained-state cost matter more than broad specialist feature depth.</p>
         </div>
         <div class="usecase-grid reveal">
           <article class="usecase-card">
             <div class="uc-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#f07060" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><circle cx="12" cy="10" r="3"/></svg></div>
             <h3>AI Agent Control Planes</h3>
-            <p>Store agent memory, session context, tool call history, and retrieval indexes in one compressed runtime. Replace Redis + Pinecone with a single service that costs a fraction to persist.</p>
+            <p>Store agent memory, session context, tool-call history, and retrieval indexes in one compressed runtime for selected workloads that benefit from fewer moving parts.</p>
           </article>
           <article class="usecase-card">
             <div class="uc-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#35d4cc" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
@@ -1140,8 +1266,8 @@
               <span class="verdict-kicker" style="background:rgba(22,125,120,0.12); color:#167d78;">✓ Choose AhanaFlow</span>
               <h3>When storage footprint and platform simplicity matter</h3>
               <ul>
-                <li><strong>State + vector in one runtime:</strong> You need KV/counters/queues AND vector search without managing two services</li>
-                <li><strong>Storage costs matter:</strong> Backups, replication, retention, egress — 88.7% smaller footprint pays dividends</li>
+                <li><strong>State + vector in one runtime:</strong> You need KV, counters, queues, and integrated vector operations without managing two products</li>
+                <li><strong>Storage costs matter:</strong> Backups, replication, retention, and egress benefit from 3.42× smaller WAL versus Redis AOF in the current compact fast-mode benchmark</li>
                 <li><strong>Embedded/edge deployments:</strong> Compressed persistence makes constrained-storage environments viable</li>
                 <li><strong>Private/air-gapped installs:</strong> Single-node simplicity for customer-controlled environments</li>
                 <li><strong>Control-plane workloads:</strong> AI agents, SaaS metering, RAG memory, workflow orchestration</li>
@@ -1167,21 +1293,21 @@
               <p class="eyebrow">Honest Assessment</p>
               <h3>Different products for different priorities.</h3>
               <p>
-                Redis is the gold standard for in-memory data structures with decades of production hardening. AhanaFlow is the new choice for teams that need state + vector in one runtime, care about storage economics (88.7% smaller footprint), and want simpler ops (one service vs Redis + vector DB + queue service). <strong>Both are valid choices</strong> — the right one depends on your workload, scale, and operational priorities.
+                Redis is still the gold standard for mature in-memory data structures and ecosystem depth. AhanaFlow is the better choice when your workload fits one node, your retained state is meaningful enough that WAL size matters, and you want integrated vector operations with the qualifiers stated up front. <strong>Both are valid choices</strong> — the right one depends on your workload, scale, and operational priorities.
               </p>
             </div>
             <div class="spotlight-stats">
               <article>
                 <strong>Compression moat</strong>
-                <span>88.7% smaller persisted footprint — structural advantage Redis cannot match</span>
+                <span>3.42× smaller WAL versus Redis AOF on the current compact fast-mode benchmark</span>
               </article>
               <article>
                 <strong>Unified platform</strong>
-                <span>State + vector + queues in one runtime — simpler ops, lower cost</span>
+                <span>State + vector + queues in one runtime for control-plane deployments</span>
               </article>
               <article>
-                <strong>2-10× faster</strong>
-                <span>1M+ GET ops/s, 0.001ms p99 — competitive speed with compression bonus</span>
+                <strong>Mode-qualified win</strong>
+                <span>1.157× Redis on compact fast-mode pipeline; RESP lane remains slower today</span>
               </article>
             </div>
           </div>
@@ -1193,73 +1319,73 @@
       <div class="shell">
         <div class="section-head reveal">
           <p class="eyebrow">Proof</p>
-          <h2>Verified numbers — not marketing claims.</h2>
+          <h2>Verified numbers, with the April 16 claim boundary included.</h2>
           <p>
-            Every benchmark is reproducible. All artifacts are in the public repository. The numbers below come from <strong>real April 9, 2026 benchmark runs</strong> — KV operations across four payload sizes (64B to 4KB), vector search at three corpus scales (1K, 5K, 10K), and an end-to-end RAG workload with cryptographic integrity verification on every payload.
+            Every benchmark is reproducible. All artifacts are in the repository. The numbers below reflect the <strong>official April 16, 2026 hotspot packet</strong>, the frozen approved vector lane, and the current buyer-safe boundary: compact fast-mode leads on pipelined KV and storage, the RESP lane is compatibility-first, and vector operations are included without pretending we have a broad fast-ANN claim today.
           </p>
         </div>
 
         <div class="compression-grid reveal">
           <article class="compression-card compression-card-primary">
-            <span class="summary-kicker">State Management</span>
-            <h3>1,006,062 GET ops/s @ 4KB with 0.001ms p99 latency.</h3>
-            <p>Over 1 million GET operations per second. SET throughput: 166K ops/s @ 64B, 125K ops/s @ 4KB. Atomic INCR: 344K-416K ops/s.</p>
+            <span class="summary-kicker">Compact Fast-Mode</span>
+            <h3>47,642.31 req/s mixed load at 1.884 ms p99.</h3>
+            <p>On the official April 16 harness, compact fast-mode also measured 295,183.83 ops/s on pipelined KV — 1.157× Redis versus managed no-persistence Redis and 1.337× Redis versus Redis appendfsync everysec.</p>
           </article>
           <article class="compression-card">
-            <span class="summary-kicker">Vector Search</span>
-            <h3>Perfect 1.000 Recall@10 at 5K corpus. 2.08ms HNSW p50 @ 10K vectors.</h3>
-            <p>82K vectors/s insert throughput. HNSW maintains 0.984+ recall even at 10K scale with sub-3ms p99 query latency.</p>
+            <span class="summary-kicker">RESP-Compatible Lane</span>
+            <h3>25,644.85 req/s mixed load at 6.044 ms p99.</h3>
+            <p>The async RESP lane measured 155,096.15 ops/s on pipelined KV versus 223,117.22 ops/s for managed Redis. It is the compatibility path, not the performance lead path.</p>
           </article>
           <article class="compression-card">
-            <span class="summary-kicker">Combined RAG Workload</span>
-            <h3>32,036 docs/s ingest · 0.8ms retrieval p50 · 100% SHA-256 integrity.</h3>
-            <p>End-to-end RAG pipeline exercising state + vector + ACP compression together. Every payload verified with cryptographic roundtrip checks.</p>
+            <span class="summary-kicker">Vector Boundary</span>
+            <h3>46.20 ms selective vector p99 with fallback 0 on the approved 10K lane.</h3>
+            <p>Approved public vector baseline: `10K` corpus, `M=12`, `ef_construction=32`, `ef_search=24`, filtered 8-bucket query, pipeline depth `2`. April 9 still supplies `82K vectors/s` insert proof and `32,036 docs/s` RAG ingest, but those do not expand the ANN latency claim boundary.</p>
           </article>
         </div>
 
         <div class="chart-grid">
           <article class="chart-card reveal">
             <div class="chart-head">
-              <h3>Persisted Footprint Comparison</h3>
+              <h3>WAL Storage Comparison</h3>
               <p>Lower is better for retention, backup, and replication cost.</p>
             </div>
             <div class="bar-list" data-chart="storage-comparison">
               <div class="bar-row">
-                <div class="bar-meta"><span>AhanaFlow</span><strong>0.57 MB</strong></div>
-                <div class="bar-track"><div class="bar-fill bar-fill-fast" data-value="11.4"></div></div>
+                <div class="bar-meta"><span>AhanaFlow compact WAL</span><strong>3,835 KB</strong></div>
+                <div class="bar-track"><div class="bar-fill bar-fill-fast" data-value="29.2"></div></div>
               </div>
               <div class="bar-row">
-                <div class="bar-meta"><span>Redis benchmark</span><strong>5.00 MB</strong></div>
+                <div class="bar-meta"><span>Redis AOF</span><strong>13,116 KB</strong></div>
                 <div class="bar-track"><div class="bar-fill bar-fill-sqlite" data-value="100"></div></div>
               </div>
             </div>
-            <p class="chart-note">A smaller persisted footprint is one of AhanaFlow's clearest advantages in customer deployments that retain meaningful state.</p>
+            <p class="chart-note">WAL size is one of AhanaFlow's clearest present-day advantages in deployments that retain meaningful operational state.</p>
           </article>
 
           <article class="chart-card reveal">
             <div class="chart-head">
               <h3>Validated Product Signals</h3>
-              <p>Measured proof from April 9, 2026 benchmark artifact.</p>
+              <p>Measured proof from the official April 16 hotspot packet.</p>
             </div>
             <div class="bar-list" data-chart="validated-signals">
               <div class="bar-row">
-                <div class="bar-meta"><span>GET ops/s @ 4KB</span><strong>1,006,062</strong></div>
+                <div class="bar-meta"><span>Mixed load, compact fast-mode</span><strong>47,642 req/s</strong></div>
                 <div class="bar-track"><div class="bar-fill bar-fill-fast" data-value="100"></div></div>
               </div>
               <div class="bar-row">
-                <div class="bar-meta"><span>GET p99 latency</span><strong>0.001 ms</strong></div>
-                <div class="bar-track"><div class="bar-fill bar-fill-fast" data-value="98"></div></div>
+                <div class="bar-meta"><span>Pipeline, compact fast-mode</span><strong>295,184 ops/s</strong></div>
+                <div class="bar-track"><div class="bar-fill bar-fill-fast" data-value="94"></div></div>
               </div>
               <div class="bar-row">
-                <div class="bar-meta"><span>HNSW Recall@10</span><strong>1.000 @ 5K</strong></div>
-                <div class="bar-track"><div class="bar-fill bar-fill-safe" data-value="100"></div></div>
+                <div class="bar-meta"><span>Pipeline, async RESP</span><strong>155,096 ops/s</strong></div>
+                <div class="bar-track"><div class="bar-fill bar-fill-safe" data-value="53"></div></div>
               </div>
               <div class="bar-row">
-                <div class="bar-meta"><span>RAG ingest</span><strong>32,036 docs/s</strong></div>
-                <div class="bar-track"><div class="bar-fill bar-fill-strict" data-value="88"></div></div>
+                <div class="bar-meta"><span>Selective vector p99</span><strong>46.20 ms</strong></div>
+                <div class="bar-track"><div class="bar-fill bar-fill-strict" data-value="62"></div></div>
               </div>
             </div>
-            <p class="chart-note">Full benchmark notebook with all 4 charts, SHA-256 integrity verification, and JSON export available in <code>reports/ahanaflow_benchmarks_2026_04_09.ipynb</code>.</p>
+            <p class="chart-note">Use the production readiness packet, <code>../../reports/vector_hotspots_10k_round9_client_pipelining_summary.json</code>, <code>../../reports/vector_hotspots_10k_round10_line_drain_summary.json</code>, and <code>../../VECTOR_STATE_SERVER_V2_CLAIM_BOUNDARY.md</code> as the canonical public claim sources.</p>
           </article>
         </div>
       </div>
@@ -1340,19 +1466,19 @@
     <section class="section status-section">
       <div class="shell status-panel reveal">
         <div>
-          <p class="eyebrow">Ready to Switch</p>
-          <h2>Replace your fragmented data stack with one compressed, self-hosted runtime.</h2>
+          <p class="eyebrow">Ready To Evaluate</p>
+          <h2>Bring one runtime into the workloads where retained-state cost and operational simplicity matter.</h2>
         </div>
         <div class="status-copy">
           <p>
-            AhanaFlow gives AI products, SaaS backends, and embedded systems everything they were paying three services for — now in one deployable runtime with 88.7% smaller persisted storage and no cloud billing relationship to manage.
+            AhanaFlow is ready for controlled deployment in the workloads where you want compressed durable state, integrated vector operations, and a public claim surface that matches the measured reality instead of glossing over it.
           </p>
           <ul class="status-list">
-            <li><strong>88.7% smaller footprint:</strong> verified on the published Redis comparison benchmark (0.57 MB vs 5.00 MB)</li>
-            <li><strong>KV + counters + queues + streams + vector:</strong> one runtime, not five services</li>
-            <li><strong>1M+ GET ops/s:</strong> 1,006,062 ops/s @ 4KB with 0.001ms p99 latency</li>
-            <li><strong>Perfect vector recall:</strong> 1.000 Recall@10 @ 5K corpus, 2.08ms HNSW p50 @ 10K vectors</li>
-            <li><strong>RAG-ready:</strong> 32K docs/s ingest, 0.8ms retrieval p50, 100% SHA-256 integrity verification</li>
+            <li><strong>3.42× smaller WAL:</strong> compact fast-mode measured 3,835 KB versus 13,116 KB for Redis AOF</li>
+            <li><strong>KV + counters + queues + streams + vector:</strong> one runtime for control-plane workloads that benefit from consolidation</li>
+            <li><strong>1.157× Redis pipeline:</strong> compact fast-mode on the official April 16 pipelined KV lane</li>
+            <li><strong>RESP-compatible path:</strong> async RESP lane present for Redis-style integration, with slower throughput stated honestly</li>
+            <li><strong>Vector operations included:</strong> exact + HNSW for sidecar and embedded use, without a broad fast-ANN claim</li>
             <li><strong>Security included:</strong> authentication, rate limiting, payload enforcement out of the box</li>
           </ul>
           <div class="status-actions">
