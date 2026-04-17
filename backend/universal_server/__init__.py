@@ -6,5 +6,6 @@ control-plane workloads.
 """
 
 from .server import UniversalStateServer
+from .redis_client import RedisCompatClient
 
-__all__ = ["UniversalStateServer"]
+__all__ = ["UniversalStateServer", "RedisCompatClient"]

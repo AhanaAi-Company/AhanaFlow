@@ -8,6 +8,8 @@ import json
 import socket
 import time
 
+import pytest
+
 
 def send_command(host: str, port: int, cmd: dict) -> dict:
     """Send JSON command to UniversalStateServer"""
@@ -21,7 +23,7 @@ def send_command(host: str, port: int, cmd: dict) -> dict:
         sock.close()
 
 
-def test_customer_db_connection():
+def _test_customer_db_connection() -> bool:
     """Test that customer DB server is accessible"""
     print("→ Testing customer DB connection...")
     try:
@@ -33,7 +35,7 @@ def test_customer_db_connection():
         return False
 
 
-def create_test_customer():
+def _create_test_customer() -> str | None:
     """Create a test customer in customer DB"""
     print("\n→ Creating test customer...")
     
@@ -89,7 +91,7 @@ def create_test_customer():
         return None
 
 
-def test_support_note(customer_id: str):
+def _test_support_note(customer_id: str) -> bool:
     """Add a support note for the test customer"""
     print(f"\n→ Adding support note for {customer_id}...")
     
@@ -116,7 +118,7 @@ def test_support_note(customer_id: str):
         return False
 
 
-def test_marketing_tag(customer_id: str):
+def _test_marketing_tag(customer_id: str) -> bool:
     """Add marketing tag for the test customer"""
     print(f"\n→ Adding marketing tag for {customer_id}...")
     
@@ -140,23 +142,23 @@ def main():
     print("╚══════════════════════════════════════════════════════════════╝\n")
     
     # Test 1: Connection
-    if not test_customer_db_connection():
+    if not _test_customer_db_connection():
         print("\n✗ FAILED: Cannot connect to customer database")
         return 1
     
     # Test 2: Create customer
-    customer_id = create_test_customer()
+    customer_id = _create_test_customer()
     if not customer_id:
         print("\n✗ FAILED: Cannot create customer")
         return 1
     
     # Test 3: Support notes
-    if not test_support_note(customer_id):
+    if not _test_support_note(customer_id):
         print("\n✗ FAILED: Cannot create support notes")
         return 1
     
     # Test 4: Marketing tags
-    if not test_marketing_tag(customer_id):
+    if not _test_marketing_tag(customer_id):
         print("\n✗ FAILED: Cannot create marketing tags")
         return 1
     
@@ -166,6 +168,16 @@ def main():
     print("  Ready for production Stripe webhook sync.")
     print("="*64)
     return 0
+
+
+def test_customer_db_integration_flow() -> None:
+    if not _test_customer_db_connection():
+        pytest.skip("customer-db service is not reachable in this environment")
+
+    customer_id = _create_test_customer()
+    assert customer_id is not None
+    assert _test_support_note(customer_id)
+    assert _test_marketing_tag(customer_id)
 
 
 if __name__ == "__main__":

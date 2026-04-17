@@ -11,7 +11,7 @@ from typing import Any
 
 import numpy as np
 
-from .hnsw import HNSWBuilder, HNSWConfig, HNSWIndex, HNSWLibBackend, make_hnsw_builder, serialize_hnsw
+from .hnsw import HNSWBuilder, HNSWConfig, HNSWIndex, HNSWLibBackend, _HNSWLIB_AVAILABLE, make_hnsw_builder, serialize_hnsw
 from .codec import compress as _compress, decompress as _decompress
 
 # --- GPU-accelerated distance computation (Feature 4) ---
@@ -98,6 +98,7 @@ class _VectorCollection:
     active_indices_cache: np.ndarray | None = None
     active_indices_dirty: bool = True
     filtered_indices_cache: dict[tuple[Any, ...], np.ndarray] | None = None
+    filtered_mask_cache: dict[tuple[Any, ...], np.ndarray] | None = None
     hnsw_filter_request_cache: dict[tuple[Any, ...], int] | None = None
 
 
@@ -279,6 +280,18 @@ class VectorStateEngineV2:
             raise ValueError(
                 "strategy must be 'exact', 'ann_rerank', 'hnsw', 'pq_rerank', 'ncd_hybrid', or 'bpe_hybrid'"
             )
+        if base_strategy == "hnsw":
+            return self._query_hnsw(
+                collection,
+                vector,
+                top_k=top_k,
+                filters=filters,
+                include_vectors=include_vectors,
+                candidate_multiplier=candidate_multiplier,
+                ann_probe_count=ann_probe_count,
+                compress_results=compress_results,
+                include_diagnostics=include_diagnostics,
+            )
         if candidate_multiplier <= 0:
             raise ValueError("candidate_multiplier must be > 0")
         with self._lock:
@@ -418,6 +431,260 @@ class VectorStateEngineV2:
             return {"hits": hits, "diagnostics": diagnostics}
         return hits
 
+    def _query_hnsw(
+        self,
+        collection: str,
+        vector: list[float],
+        *,
+        top_k: int,
+        filters: dict[str, Any] | None,
+        include_vectors: bool,
+        candidate_multiplier: int,
+        ann_probe_count: int | None,
+        compress_results: bool,
+        include_diagnostics: bool,
+    ) -> Any:
+        if candidate_multiplier <= 0:
+            raise ValueError("candidate_multiplier must be > 0")
+
+        diagnostics: dict[str, Any] | None = {} if include_diagnostics else None
+        filter_cache_key: tuple[Any, ...] | None = None
+        search_builder: HNSWBuilder | HNSWLibBackend | None = None
+        requested_hnsw_hits = 0
+        success_hnsw_hit_ceiling = 0
+        cached_requested_hnsw_hits: int | None = None
+        retry_requested_hnsw_hits: int | None = None
+        exact_candidates: np.ndarray
+        query_vector: np.ndarray
+
+        with self._lock:
+            col = self._require_collection(collection)
+            query_vector = self._normalize_vector_input(vector)
+            self._validate_vector_dimensions(col, query_vector)
+            self._purge_all_expired(col)
+
+            active_indices = self._active_indices(col)
+            active_count = int(active_indices.size)
+            exact_candidates = self._candidate_indices(col, filters) if filters else active_indices
+            filter_cache_key = self._filter_cache_key(filters) if filters else None
+
+            if diagnostics is not None:
+                diagnostics["strategy"] = "hnsw"
+                diagnostics["filter_applied"] = bool(filters)
+                diagnostics["top_k"] = int(top_k)
+                diagnostics["candidate_multiplier"] = int(candidate_multiplier)
+                diagnostics["ann_probe_count"] = int(ann_probe_count) if ann_probe_count is not None else None
+                diagnostics["active_candidate_count"] = active_count
+                diagnostics["filtered_candidate_count"] = int(exact_candidates.size)
+                diagnostics["fallback_used"] = False
+                diagnostics["fallback_reason"] = None
+                diagnostics["fallback_candidate_count"] = 0
+                diagnostics["hnsw_raw_hit_count"] = 0
+                diagnostics["hnsw_filtered_hit_count"] = 0
+                diagnostics["requested_hnsw_hits"] = 0
+                diagnostics["cached_requested_hnsw_hits"] = None
+                diagnostics["adapted_requested_hnsw_hits"] = None
+                diagnostics["retry_requested_hnsw_hits"] = None
+                diagnostics["hnsw_search_attempts"] = 0
+                diagnostics["effective_ef_search"] = None
+
+            if exact_candidates.size == 0:
+                return {"hits": [], "diagnostics": diagnostics} if diagnostics is not None else []
+
+            top_k = min(top_k, int(exact_candidates.size))
+
+            if exact_candidates.size > top_k:
+                search_builder = self._ensure_hnsw_index_locked(col)
+                if search_builder is None or search_builder.index.node_count == 0:
+                    search_builder = None
+                    if diagnostics is not None:
+                        diagnostics["fallback_used"] = True
+                        diagnostics["fallback_reason"] = "missing_hnsw_index"
+                        diagnostics["fallback_candidate_count"] = int(exact_candidates.size)
+                else:
+                    base_hnsw_hits = max(top_k * candidate_multiplier, top_k)
+                    success_hnsw_hit_ceiling = min(active_count, max(base_hnsw_hits * 2, base_hnsw_hits + (top_k * 12)))
+                    requested_hnsw_hits = base_hnsw_hits
+                    if filters:
+                        filtered_count = int(exact_candidates.size)
+                        target_filtered_hits = min(filtered_count, max(top_k * 2, top_k + max(4, top_k)))
+                        if filtered_count > 0 and active_count > filtered_count:
+                            estimated_hits = int(np.ceil(target_filtered_hits * (active_count / filtered_count)))
+                            success_hnsw_hit_ceiling = min(
+                                active_count,
+                                max(int(np.ceil(base_hnsw_hits * 1.5)), estimated_hits),
+                            )
+                            requested_hnsw_hits = min(
+                                active_count,
+                                max(base_hnsw_hits, estimated_hits, int(np.ceil(base_hnsw_hits * 1.5))),
+                            )
+                        request_cache = col.hnsw_filter_request_cache
+                        if request_cache is None:
+                            request_cache = {}
+                            col.hnsw_filter_request_cache = request_cache
+                        cached_requested_hnsw_hits = request_cache.get(filter_cache_key) if filter_cache_key is not None else None
+                        if cached_requested_hnsw_hits is not None:
+                            requested_hnsw_hits = max(base_hnsw_hits, min(active_count, int(cached_requested_hnsw_hits)))
+                        if cached_requested_hnsw_hits is None or int(cached_requested_hnsw_hits) <= success_hnsw_hit_ceiling:
+                            requested_hnsw_hits = min(requested_hnsw_hits, success_hnsw_hit_ceiling)
+                    ef_search = ann_probe_count if ann_probe_count is not None else search_builder.index.config.ef_search
+                    effective_ef_search = max(int(ef_search), int(requested_hnsw_hits))
+                    if diagnostics is not None:
+                        diagnostics["requested_hnsw_hits"] = int(requested_hnsw_hits)
+                        diagnostics["cached_requested_hnsw_hits"] = cached_requested_hnsw_hits
+                        diagnostics["effective_ef_search"] = int(effective_ef_search)
+                        diagnostics["success_hnsw_hit_ceiling"] = int(success_hnsw_hit_ceiling)
+
+            matrix_ref = col.matrix
+            norms_ref = col.norms
+            active_snapshot = col.active.copy()
+
+        candidate_indices = exact_candidates
+        if search_builder is not None:
+            effective_hits = int(requested_hnsw_hits)
+            while True:
+                hits = search_builder.search(
+                    query_vector,
+                    top_k=effective_hits,
+                    ef_search=max(
+                        int(ann_probe_count if ann_probe_count is not None else search_builder.index.config.ef_search),
+                        effective_hits,
+                    ),
+                    matrix=matrix_ref,
+                    norms=norms_ref,
+                    active=active_snapshot,
+                )
+                if diagnostics is not None:
+                    diagnostics["hnsw_search_attempts"] = int(diagnostics["hnsw_search_attempts"]) + 1
+                    diagnostics["hnsw_raw_hit_count"] = int(len(hits))
+
+                if not hits:
+                    if diagnostics is not None:
+                        diagnostics["fallback_used"] = True
+                        diagnostics["fallback_reason"] = "empty_hnsw_hits"
+                        diagnostics["fallback_candidate_count"] = int(exact_candidates.size)
+                    break
+
+                hnsw_candidates = np.asarray([idx for idx, _ in hits], dtype=np.int64)
+                adapted_hits: int | None = None
+                should_retry = False
+                if filters:
+                    with self._lock:
+                        col = self._require_collection(collection)
+                        filter_mask = self._candidate_mask(col, filters)
+                    if filter_mask is not None and hnsw_candidates.size > 0:
+                        hnsw_candidates = hnsw_candidates[filter_mask[hnsw_candidates]]
+                    else:
+                        hnsw_candidates = np.intersect1d(hnsw_candidates, exact_candidates, assume_unique=False)
+                    observed_filtered_hits = int(hnsw_candidates.size)
+                    target_filtered_hits = min(int(exact_candidates.size), max(top_k * 2, top_k + max(4, top_k)))
+                    if observed_filtered_hits > 0:
+                        recommended_hits = int(np.ceil(effective_hits * (target_filtered_hits / observed_filtered_hits)))
+                    else:
+                        recommended_hits = int(effective_hits * 2)
+                    if observed_filtered_hits < top_k:
+                        recommended_hits = max(recommended_hits, int(effective_hits * 2))
+                    with self._lock:
+                        col = self._require_collection(collection)
+                        request_cache = col.hnsw_filter_request_cache
+                        if request_cache is None:
+                            request_cache = {}
+                            col.hnsw_filter_request_cache = request_cache
+                        active_count = int(self._active_indices(col).size)
+                        recommended_hits = max(max(top_k * candidate_multiplier, top_k), min(active_count, recommended_hits))
+                        previous_hits = int(request_cache.get(filter_cache_key, effective_hits)) if filter_cache_key is not None else int(effective_hits)
+                        adapted_hits = max(
+                            max(top_k * candidate_multiplier, top_k),
+                            min(active_count, int(round((previous_hits + recommended_hits) / 2))),
+                        )
+                        if success_hnsw_hit_ceiling > 0:
+                            adapted_hits = min(adapted_hits, success_hnsw_hit_ceiling)
+                        if filter_cache_key is not None:
+                            request_cache[filter_cache_key] = adapted_hits
+                    if diagnostics is not None:
+                        diagnostics["adapted_requested_hnsw_hits"] = adapted_hits
+                    should_retry = observed_filtered_hits < top_k and adapted_hits is not None and adapted_hits > effective_hits and retry_requested_hnsw_hits is None
+                if diagnostics is not None:
+                    diagnostics["hnsw_filtered_hit_count"] = int(hnsw_candidates.size)
+                if hnsw_candidates.size >= top_k:
+                    candidate_indices = hnsw_candidates
+                    break
+                if should_retry:
+                    retry_requested_hnsw_hits = int(adapted_hits)
+                    effective_hits = retry_requested_hnsw_hits
+                    if diagnostics is not None:
+                        diagnostics["retry_requested_hnsw_hits"] = retry_requested_hnsw_hits
+                        diagnostics["effective_ef_search"] = max(
+                            int(ann_probe_count if ann_probe_count is not None else search_builder.index.config.ef_search),
+                            effective_hits,
+                        )
+                    continue
+                if diagnostics is not None:
+                    diagnostics["fallback_used"] = True
+                    diagnostics["fallback_reason"] = "insufficient_filtered_hnsw_hits"
+                    diagnostics["fallback_candidate_count"] = int(exact_candidates.size)
+                break
+
+        with self._lock:
+            col = self._require_collection(collection)
+            live_candidates = candidate_indices[candidate_indices < col.count]
+            if live_candidates.size:
+                live_candidates = live_candidates[col.active[live_candidates]]
+            candidate_indices = live_candidates
+            if diagnostics is not None:
+                diagnostics["scored_candidate_count"] = int(candidate_indices.size)
+            if candidate_indices.size == 0:
+                return {"hits": [], "diagnostics": diagnostics} if diagnostics is not None else []
+
+            matrix_snap = col.matrix[candidate_indices].copy()
+            norms_snap = col.norms[candidate_indices].copy()
+            metric = col.metric
+            ids_snap = [col.ids[int(i)] for i in candidate_indices]
+            metadata_snap = [dict(col.metadata[int(i)] or {}) for i in candidate_indices]
+            payloads_snap = [col.payloads[int(i)] for i in candidate_indices]
+            include_vectors_snap = [col.matrix[int(i)].copy() for i in candidate_indices] if include_vectors else None
+
+        scores = matrix_snap @ query_vector
+        if metric != "dot":
+            query_norm = float(np.linalg.norm(query_vector))
+            if query_norm == 0.0:
+                scores = np.zeros(len(candidate_indices), dtype=np.float32)
+            else:
+                denom = norms_snap * np.float32(query_norm)
+                scores = np.divide(
+                    scores,
+                    denom,
+                    out=np.zeros(len(candidate_indices), dtype=np.float32),
+                    where=denom > 0,
+                )
+
+        ranked_positions = np.argpartition(scores, -top_k)[-top_k:]
+        ranked_positions = ranked_positions[np.argsort(scores[ranked_positions])[::-1]]
+
+        hits_out = []
+        for pos in ranked_positions:
+            pos = int(pos)
+            item_id = ids_snap[pos]
+            if item_id is None:
+                continue
+            payload = payloads_snap[pos]
+            hit: dict[str, Any] = {
+                "id": item_id,
+                "score": float(scores[pos]),
+                "metadata": metadata_snap[pos],
+            }
+            if compress_results and payload is not None:
+                hit["payload"] = self._compress_payload(payload)
+            else:
+                hit["payload"] = payload
+            if include_vectors_snap is not None:
+                hit["vector"] = include_vectors_snap[pos].astype(float).tolist()
+            hits_out.append(hit)
+
+        if diagnostics is not None:
+            return {"hits": hits_out, "diagnostics": diagnostics}
+        return hits_out
+
     def build_ann_index(self, collection: str, *, n_lists: int | None = None) -> dict[str, int]:
         with self._lock:
             col = self._require_collection(collection)
@@ -459,6 +726,12 @@ class VectorStateEngineV2:
             tuned_M_max0 = M_max0 if M_max0 is not None else tuned_M * 2
             tuned_ef_construction = (
                 ef_construction if ef_construction is not None else
+                (
+                    32 if live_count <= 5_000 else
+                    48 if live_count <= 10_000 else
+                    64 if live_count <= 50_000 else
+                    96
+                ) if not _HNSWLIB_AVAILABLE else
                 (64 if live_count <= 10_000 else 96 if live_count <= 50_000 else 128)
             )
             tuned_ef_search = (
@@ -593,6 +866,7 @@ class VectorStateEngineV2:
                 modality=str(record.get("modality", "vector")),
                 version_history={},
                 filtered_indices_cache={},
+                filtered_mask_cache={},
                 hnsw_filter_request_cache={},
             )
             return
@@ -629,6 +903,7 @@ class VectorStateEngineV2:
             col.active[index] = True
             col.active_indices_dirty = True
             col.filtered_indices_cache = None
+            col.filtered_mask_cache = None
             col.hnsw_filter_request_cache = {}
             col.ann_dirty = True
             col.hnsw_dirty = True
@@ -1030,6 +1305,10 @@ class VectorStateEngineV2:
         if cache is None:
             cache = {}
             collection.filtered_indices_cache = cache
+        mask_cache = collection.filtered_mask_cache
+        if mask_cache is None:
+            mask_cache = {}
+            collection.filtered_mask_cache = mask_cache
         cache_key = self._filter_cache_key(filters)
         cached = cache.get(cache_key)
         if cached is not None:
@@ -1041,7 +1320,27 @@ class VectorStateEngineV2:
         ]
         filtered_indices = np.asarray(filtered, dtype=np.int64)
         cache[cache_key] = filtered_indices
+        mask = np.zeros(max(collection.count, 1), dtype=bool)
+        if filtered_indices.size > 0:
+            mask[filtered_indices] = True
+        mask_cache[cache_key] = mask
         return filtered_indices
+
+    def _candidate_mask(self, collection: _VectorCollection, filters: dict[str, Any] | None) -> np.ndarray | None:
+        if not filters:
+            return None
+        cache_key = self._filter_cache_key(filters)
+        mask_cache = collection.filtered_mask_cache
+        if mask_cache is None:
+            mask_cache = {}
+            collection.filtered_mask_cache = mask_cache
+        cached = mask_cache.get(cache_key)
+        if cached is not None:
+            return cached
+        self._candidate_indices(collection, filters)
+        if collection.filtered_mask_cache is None:
+            return None
+        return collection.filtered_mask_cache.get(cache_key)
 
     def _candidate_indices_for_strategy(
         self,
@@ -1103,9 +1402,17 @@ class VectorStateEngineV2:
             requested_hnsw_hits = base_hnsw_hits
             if filters:
                 filtered_count = int(exact_candidates.size)
+                target_filtered_hits = min(filtered_count, max(top_k * 2, top_k + max(4, top_k)))
                 if filtered_count > 0 and active_count > filtered_count:
-                    selectivity_scale = int(np.ceil(np.sqrt(active_count / filtered_count)))
-                    requested_hnsw_hits = min(active_count, max(base_hnsw_hits, top_k * selectivity_scale, base_hnsw_hits * selectivity_scale))
+                    estimated_hits = int(np.ceil(target_filtered_hits * (active_count / filtered_count)))
+                    success_hnsw_hit_ceiling = min(
+                        active_count,
+                        max(int(np.ceil(base_hnsw_hits * 1.5)), estimated_hits),
+                    )
+                    requested_hnsw_hits = min(
+                        active_count,
+                        max(base_hnsw_hits, estimated_hits, int(np.ceil(base_hnsw_hits * 1.5))),
+                    )
                 request_cache = collection.hnsw_filter_request_cache
                 if request_cache is None:
                     request_cache = {}
@@ -1142,15 +1449,16 @@ class VectorStateEngineV2:
                 return fallback_candidates
             hnsw_candidates = np.asarray([idx for idx, _ in hits], dtype=np.int64)
             if filters:
-                if exact_candidates is None:
-                    exact_candidates = self._candidate_indices(collection, filters)
-                hnsw_candidates = np.intersect1d(hnsw_candidates, exact_candidates, assume_unique=False)
+                filter_mask = self._candidate_mask(collection, filters)
+                if filter_mask is not None and hnsw_candidates.size > 0:
+                    hnsw_candidates = hnsw_candidates[filter_mask[hnsw_candidates]]
+                elif exact_candidates is not None:
+                    hnsw_candidates = np.intersect1d(hnsw_candidates, exact_candidates, assume_unique=False)
                 request_cache = collection.hnsw_filter_request_cache
                 if request_cache is None:
                     request_cache = {}
                     collection.hnsw_filter_request_cache = request_cache
                 observed_filtered_hits = int(hnsw_candidates.size)
-                target_filtered_hits = min(int(exact_candidates.size), max(top_k * 2, top_k + max(4, top_k)))
                 if observed_filtered_hits > 0:
                     recommended_hits = int(np.ceil(requested_hnsw_hits * (target_filtered_hits / observed_filtered_hits)))
                 else:
@@ -1160,7 +1468,7 @@ class VectorStateEngineV2:
                 recommended_hits = max(base_hnsw_hits, min(active_count, recommended_hits))
                 previous_hits = int(request_cache.get(filter_cache_key, requested_hnsw_hits)) if filter_cache_key is not None else int(requested_hnsw_hits)
                 adapted_hits = max(base_hnsw_hits, min(active_count, int(round((previous_hits + recommended_hits) / 2))))
-                if observed_filtered_hits >= top_k:
+                if success_hnsw_hit_ceiling > 0:
                     adapted_hits = min(adapted_hits, success_hnsw_hit_ceiling)
                 if filter_cache_key is not None:
                     request_cache[filter_cache_key] = adapted_hits
@@ -1260,6 +1568,14 @@ class VectorStateEngineV2:
         new vectors were added (no deletions since last build), we skip the full
         rebuild and call upsert_vector() for each new entry.  This reduces the
         per-upsert overhead from a full O(N) rebuild to O(log N) insert.
+
+        Rebuild cost optimizations:
+        - Incremental batch ceiling raised from 512 → 2048: avoids triggering a
+          full O(N·ef_construction) rebuild for medium insertions.
+        - ef_construction is auto-scaled by collection size on full rebuild so
+          small collections rebuild in <1s instead of 14s at ef=200.
+        - Deletions at or below 5% of live count use incremental mark+rebuild
+          rather than always forcing a full rebuild.
         """
         builder = collection.hnsw_builder
         live_count = self._live_vector_count(collection)
@@ -1267,36 +1583,62 @@ class VectorStateEngineV2:
             return builder
 
         # Incremental path: only available for HNSWLibBackend (C++ backend).
+        # Also usable after small deletions if the ratio is ≤5% of live count
+        # (tombstones don't corrupt graph correctness for small delete ratios).
+        has_deletions = getattr(collection, "_hnsw_has_deletions", False)
+        deletion_count = getattr(collection, "_hnsw_deletion_count", 0)
+        small_deletion = (
+            has_deletions
+            and live_count > 0
+            and deletion_count <= max(1, live_count // 20)  # ≤5% of live count
+        )
         if (
             builder is not None
             and isinstance(builder, HNSWLibBackend)
             and collection.hnsw_dirty
-            and not getattr(collection, "_hnsw_has_deletions", False)
+            and (not has_deletions or small_deletion)
         ):
             active_indices = self._active_indices(collection)
-            built_size = builder.index.build_size
-            new_indices = active_indices[active_indices >= built_size] if built_size < active_indices.size else active_indices[active_indices > max(int(built_size) - 1, -1)]
-            new_only = [int(i) for i in active_indices if builder.index.node_count == 0 or int(i) not in range(int(builder.index.build_size))]
             # Re-derive: indices not yet in the hnswlib index
             all_new = [int(i) for i in active_indices if int(i) >= int(builder.index.build_size)]
-            if all_new and len(all_new) <= 512:
-                # Small batch — incremental upsert
+            if all_new and len(all_new) <= 2048:
+                # Medium batch — incremental upsert (raised ceiling from 512 → 2048)
                 for idx in all_new:
                     builder.upsert_vector(idx, collection.matrix[idx])
                 collection.hnsw_dirty = False
                 collection._hnsw_has_deletions = False  # type: ignore[attr-defined]
+                collection._hnsw_deletion_count = 0  # type: ignore[attr-defined]
                 return builder
 
-        # Full rebuild path
+        # Full rebuild path — use size-tuned ef_construction to avoid O(N·200)
+        # cost on small-to-medium collections.
         config = HNSWConfig(metric=collection.metric)
         if builder is not None:
             config = builder.index.config
+        else:
+            # Auto-tune ef_construction based on live collection size
+            tuned_ef = (
+                32 if live_count <= 1_000 else
+                48 if live_count <= 5_000 else
+                64 if live_count <= 20_000 else
+                96 if live_count <= 100_000 else
+                128
+            )
+            tuned_M = 12 if live_count <= 50_000 else 16
+            config = HNSWConfig(
+                M=tuned_M,
+                M_max0=tuned_M * 2,
+                ef_construction=tuned_ef,
+                ef_search=config.ef_search,
+                metric=collection.metric,
+            )
         builder = make_hnsw_builder(config, collection.dimensions)
         active_indices = self._active_indices(collection)
         builder.build_from_matrix(active_indices, collection.matrix, collection.norms)
         collection.hnsw_builder = builder
         collection.hnsw_dirty = False
         collection._hnsw_has_deletions = False  # type: ignore[attr-defined]
+        collection._hnsw_deletion_count = 0  # type: ignore[attr-defined]
         return builder
 
     def _build_ann_index_locked(self, collection: _VectorCollection, n_lists: int | None = None) -> _AnnIndex:
@@ -1395,6 +1737,7 @@ class VectorStateEngineV2:
         collection.active[index] = False
         collection.active_indices_dirty = True
         collection.filtered_indices_cache = None
+        collection.filtered_mask_cache = None
         collection.hnsw_filter_request_cache = {}
         if collection.free_indices is None:
             collection.free_indices = []
@@ -1402,6 +1745,7 @@ class VectorStateEngineV2:
         collection.ann_dirty = True
         collection.hnsw_dirty = True
         collection._hnsw_has_deletions = True  # type: ignore[attr-defined]
+        collection._hnsw_deletion_count = getattr(collection, "_hnsw_deletion_count", 0) + 1  # type: ignore[attr-defined]
         if collection.hnsw_builder is not None:
             collection.hnsw_builder.mark_deleted(index)
 
@@ -1445,6 +1789,7 @@ class VectorStateEngineV2:
         collection.active_indices_cache = np.flatnonzero(collection.active[: collection.count]).astype(np.int64, copy=False)
         collection.active_indices_dirty = False
         collection.filtered_indices_cache = {}
+        collection.filtered_mask_cache = {}
         collection.hnsw_filter_request_cache = {}
         collection.ann_dirty = True
         collection.ann_index = None

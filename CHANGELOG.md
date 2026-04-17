@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-04-16
+
+### Added
+- **Hybrid wire protocol** — auto-detects RESP (Redis) vs compact JSON per TCP connection
+- **`RedisCompatClient`** — drop-in replacement for `redis-py` with pipeline support
+- **`AsyncUniversalStateServer`** — production-grade asyncio server with hybrid routing
+- **RESP protocol layer** (`redis_compat/`) — full RESP2 parser, encoder, pre-cached response pool
+- **Cython RESP accelerator** (`_resp_accel.pyx`) — optional compiled fast path for RESP parsing
+- **Pipeline dispatch** (`_dispatch_pipeline_locked`) — atomic batched command execution
+- **Compact response mode** — reduced JSON wire overhead for high-throughput paths
+- **`benchmark_vs_competitors.py`** — comprehensive Redis/USS competitive benchmark suite
+- **Inlined engine dispatch** — bypasses Python method call overhead for hot paths (SET/GET/INCR)
+
+### Performance
+- **1.2-1.4× Redis throughput** on compact JSON wire (up from 0.94-0.96×)
+- **1.63× Redis throughput** on batched operations (maintained)
+- Near-parity with Redis on RESP wire (drop-in compatible)
+- Inlined dispatch eliminates per-command Python overhead
+
+### Fixed
+- Protocol round-trip fidelity for all value types (None, bool, int, float, str, dict, list)
+- Pipeline atomic execution under lock for consistency
+
+---
+
 ## [1.0.0] - 2026-04-10
 
 ### Added

@@ -48,7 +48,7 @@ from email.mime.text import MIMEText
 from typing import Any, Optional
 
 import stripe
-from fastapi import FastAPI, Request, Response, HTTPException, Header
+from fastapi import FastAPI, Request, Response, HTTPException, Header, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -69,9 +69,9 @@ log = logging.getLogger("ahanaflow.webhook")
 # ---------------------------------------------------------------------------
 # Config
 # ---------------------------------------------------------------------------
-STRIPE_SECRET_KEY = os.environ["STRIPE_SECRET_KEY"]
-STRIPE_WEBHOOK_SECRET = os.environ["STRIPE_WEBHOOK_SECRET"]
-AHANAFLOW_SIGNING_KEY = os.environ["AHANAFLOW_SIGNING_KEY"]
+STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
+STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
+AHANAFLOW_SIGNING_KEY = os.environ.get("AHANAFLOW_SIGNING_KEY", "")
 FROM_EMAIL = os.environ.get("FROM_EMAIL", "licenses@ahanazip.com")
 LICENSE_PORTAL_BASE_URL = os.environ.get("LICENSE_PORTAL_BASE_URL", "https://api.ahanazip.com")
 LICENSE_DAYS_MONTHLY = int(os.environ.get("LICENSE_DAYS_MONTHLY", 32))
@@ -90,6 +90,100 @@ PORTAL_SESSION_TTL_SECONDS = int(os.environ.get("PORTAL_SESSION_TTL_SECONDS", 36
 
 stripe.api_key = STRIPE_SECRET_KEY
 API_KEY_REGISTRY = ApiKeyRegistry(AHANAFLOW_API_KEY_REGISTRY_PATH)
+
+# ---------------------------------------------------------------------------
+# Customer DB (UniversalStateServer — same instance on port 9633)
+# ---------------------------------------------------------------------------
+_AHANAFLOW_HOST = os.environ.get("AHANAFLOW_HOST", "127.0.0.1")
+_AHANAFLOW_PORT = int(os.environ.get("AHANAFLOW_PORT", "9633"))
+
+
+def _get_customer_db() -> Optional[CustomerDatabaseEngine]:
+    """Open a fresh CustomerDatabaseEngine connection (short-lived per call)."""
+    try:
+        cdb = CustomerDatabaseEngine(host=_AHANAFLOW_HOST, port=_AHANAFLOW_PORT)
+        cdb.connect()
+        return cdb
+    except Exception as exc:  # noqa: BLE001
+        log.warning("CustomerDB unavailable (%s:%s): %s", _AHANAFLOW_HOST, _AHANAFLOW_PORT, exc)
+        return None
+
+
+# Module-level reference — used by _sync_entitlement and admin routes.
+customer_db: Optional[CustomerDatabaseEngine] = _get_customer_db()
+
+# ---------------------------------------------------------------------------
+# Service API key — protects public-facing routes (e.g. /v1/leads)
+# Stored in UniversalStateServer so rotation requires no container restart.
+# Env var AHANAFLOW_SERVICE_API_KEY seeds the key on first boot.
+# ---------------------------------------------------------------------------
+_SERVICE_KEY_BOOT = os.environ.get("AHANAFLOW_SERVICE_API_KEY", "").strip()
+_SERVICE_KEY_USS_CURRENT = "service_key:current"
+_SERVICE_KEY_USS_PREV = "service_key:prev"
+
+
+def _uss_get(key: str) -> Optional[str]:
+    """Read a single key from UniversalStateServer (best-effort)."""
+    try:
+        cdb = CustomerDatabaseEngine(host=_AHANAFLOW_HOST, port=_AHANAFLOW_PORT)
+        cdb.connect()
+        resp = cdb._send({"cmd": "GET", "key": key})
+        cdb.close()
+        return resp.get("result")
+    except Exception:
+        return None
+
+
+def _uss_set(key: str, value: str) -> None:
+    """Write a single key to UniversalStateServer (best-effort)."""
+    try:
+        cdb = CustomerDatabaseEngine(host=_AHANAFLOW_HOST, port=_AHANAFLOW_PORT)
+        cdb.connect()
+        cdb._send({"cmd": "SET", "key": key, "value": value})
+        cdb.close()
+    except Exception:
+        pass
+
+
+def _bootstrap_service_key() -> None:
+    """On startup, seed the service key from env if USS has none."""
+    if not _SERVICE_KEY_BOOT:
+        return
+    existing = _uss_get(_SERVICE_KEY_USS_CURRENT)
+    if not existing:
+        _uss_set(_SERVICE_KEY_USS_CURRENT, _SERVICE_KEY_BOOT)
+        log.info("Service API key seeded from env var into USS")
+
+
+def _valid_service_keys() -> set[str]:
+    """Return set of currently valid service keys (current + prev).
+
+    USS keys (current + prev) are the authoritative source of truth.
+    The boot env-var key is a last-resort fallback used only when USS
+    is completely unreachable (e.g. first boot before seeding completes).
+    """
+    keys: set[str] = set()
+    current = _uss_get(_SERVICE_KEY_USS_CURRENT)
+    if current:
+        keys.add(current)
+    prev = _uss_get(_SERVICE_KEY_USS_PREV)
+    if prev:
+        keys.add(prev)
+    # Fallback: use env-var key only when USS has NO keys at all
+    if not keys and _SERVICE_KEY_BOOT:
+        keys.add(_SERVICE_KEY_BOOT)
+    return keys
+
+
+def _require_service_key(x_service_key: str | None = Header(None)) -> None:
+    """FastAPI dependency — rejects requests missing a valid service key."""
+    valid = _valid_service_keys()
+    if not valid:
+        # No keys configured at all — open access (dev mode)
+        return
+    if not x_service_key or x_service_key not in valid:
+        raise HTTPException(status_code=401, detail="Invalid or missing service API key")
+
 
 PLAN_MAX_API_KEYS = {
     "pro": 1,
@@ -161,6 +255,13 @@ app.add_middleware(
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
+
+
+@app.on_event("startup")
+async def _on_startup() -> None:
+    """Seed the service key into USS after the server (and USS) are fully ready."""
+    _bootstrap_service_key()
+
 
 
 def _tier_for_price_id(price_id: str | None) -> str:
@@ -382,6 +483,55 @@ def _sanitize_metadata(metadata: dict[str, Any]) -> dict[str, str]:
             continue
         cleaned[str(key)[:40]] = str(value)[:400]
     return cleaned
+
+
+# ---------------------------------------------------------------------------
+# Lead capture — no Stripe required
+# ---------------------------------------------------------------------------
+class LeadRequest(BaseModel):
+    email: str = Field(min_length=3)
+    company_name: str = ""
+    source: str = ""
+
+
+@app.post("/v1/leads", status_code=201, dependencies=[Depends(_require_service_key)])
+async def capture_lead(payload: LeadRequest):
+    """Capture a marketing lead directly into the customer DB."""
+    normalized = payload.email.strip().lower()
+    if "@" not in normalized:
+        raise HTTPException(status_code=400, detail="Invalid email")
+
+    cdb = _get_customer_db()
+    customer_id = f"lead_{secrets.token_hex(8)}"
+    already_exists = False
+    if cdb:
+        try:
+            existing = cdb.get_customer_by_email(normalized)
+            if existing:
+                customer_id = existing.customer_id
+                already_exists = True
+            else:
+                cdb.create_customer(Customer(
+                    customer_id=customer_id,
+                    email=normalized,
+                    created_at=int(time.time()),
+                    updated_at=int(time.time()),
+                    company_name=payload.company_name or "",
+                    source=payload.source or "organic",
+                    tags=["lead"],
+                    segment="lead",
+                ))
+            log.info("Lead captured email=%s id=%s new=%s", normalized, customer_id, not already_exists)
+        except Exception as exc:  # noqa: BLE001
+            log.error("Lead capture DB error: %s", exc)
+            raise HTTPException(status_code=500, detail="Database error") from exc
+        finally:
+            cdb.close()
+    else:
+        log.warning("Lead capture: customer DB unavailable — lead not persisted")
+        raise HTTPException(status_code=503, detail="Customer database unavailable")
+
+    return {"ok": True, "customer_id": customer_id, "new": not already_exists}
 
 
 @app.post("/billing/create-checkout-session", response_model=CheckoutResponse)
@@ -766,4 +916,212 @@ async def revoke_api_key(request: ApiKeyRevokeRequest, x_portal_token: str | Non
         "tier": str(record.get("tier", "pro")),
         "max_api_keys": int(record.get("max_api_keys", 1) or 1),
         "api_keys": API_KEY_REGISTRY.list_api_keys(customer["id"]),
+    }
+
+
+# ---------------------------------------------------------------------------
+# Admin dashboard — password-protected operator UI
+# ---------------------------------------------------------------------------
+import asyncio
+from pathlib import Path as _Path
+from fastapi.responses import HTMLResponse, FileResponse
+
+_ADMIN_PASSWORD_HASH: str = os.environ.get(
+    "ADMIN_PASSWORD_HASH",
+    # Default: SHA-256 of "AhanaAdmin2026!" — change via env var before production
+    "9a1b9acb5b48d7b92ac85f5b149b38366661c220e7eba1b69bc05a0f1ee48685",
+)
+_ADMIN_TOKENS: dict[str, float] = {}  # token → expiry timestamp
+_ADMIN_TOKEN_TTL = 8 * 3600  # 8 hours
+_ADMIN_TOKEN_LOCK = __import__("threading").Lock()
+
+
+class _AdminLoginRequest(BaseModel):
+    password: str = Field(min_length=1)
+
+
+def _hash_password(password: str) -> str:
+    return hashlib.sha256(password.encode("utf-8")).hexdigest()
+
+
+def _issue_admin_token() -> str:
+    token = secrets.token_urlsafe(32)
+    with _ADMIN_TOKEN_LOCK:
+        _ADMIN_TOKENS[token] = time.time() + _ADMIN_TOKEN_TTL
+        # Prune expired tokens
+        expired = [t for t, exp in _ADMIN_TOKENS.items() if exp < time.time()]
+        for t in expired:
+            _ADMIN_TOKENS.pop(t, None)
+    return token
+
+
+def _require_admin_token(x_admin_token: str | None) -> None:
+    if not x_admin_token:
+        raise HTTPException(status_code=401, detail="Admin token required")
+    with _ADMIN_TOKEN_LOCK:
+        expiry = _ADMIN_TOKENS.get(x_admin_token)
+    if expiry is None or expiry < time.time():
+        raise HTTPException(status_code=401, detail="Invalid or expired admin token")
+
+
+@app.get("/admin", response_class=HTMLResponse)
+async def admin_dashboard():
+    """Serve the admin dashboard SPA."""
+    html_path = _Path(__file__).parent.parent.parent / "website" / "admin.html"
+    if not html_path.exists():
+        raise HTTPException(status_code=503, detail="Admin dashboard not found")
+    return HTMLResponse(content=html_path.read_text(encoding="utf-8"))
+
+
+@app.post("/admin/login")
+async def admin_login(request: _AdminLoginRequest):
+    """Authenticate with admin password and receive a session token."""
+    if _hash_password(request.password) != _ADMIN_PASSWORD_HASH.lower():
+        raise HTTPException(status_code=401, detail="Invalid password")
+    token = _issue_admin_token()
+    return {"ok": True, "token": token, "ttl": _ADMIN_TOKEN_TTL}
+
+
+@app.get("/admin/summary")
+async def admin_summary(x_admin_token: str | None = Header(None)):
+    """Return high-level dashboard summary."""
+    _require_admin_token(x_admin_token)
+    reg = API_KEY_REGISTRY._load()
+    customers = list(reg.get("customers", {}).values())
+    active = [c for c in customers if c.get("subscription_id")]
+    plans = {"pro": 0, "team": 0, "enterprise": 0, "other": 0}
+    for c in active:
+        plan = str(c.get("plan", "other"))
+        if plan in plans:
+            plans[plan] += 1
+        else:
+            plans["other"] += 1
+    total_api_keys = sum(len(c.get("api_keys", [])) for c in customers)
+
+    # Count leads from customer DB
+    db_leads = 0
+    cdb = _get_customer_db()
+    if cdb:
+        try:
+            db_leads = len(cdb.list_all_customers())
+        except Exception:
+            pass
+        finally:
+            cdb.close()
+
+    return {
+        "total_customers": len(customers),
+        "active_subscriptions": len(active),
+        "plan_breakdown": plans,
+        "total_api_keys_issued": total_api_keys,
+        "db_leads": db_leads,
+    }
+
+
+@app.get("/admin/customers")
+async def admin_customers(x_admin_token: str | None = Header(None)):
+    """Return all customer records (JSON registry + DB leads merged)."""
+    _require_admin_token(x_admin_token)
+    reg = API_KEY_REGISTRY._load()
+    customers = list(reg.get("customers", {}).values())
+    registry_emails = {str(c.get("email", "")).lower() for c in customers}
+
+    # Merge leads from customer DB
+    cdb = _get_customer_db()
+    if cdb:
+        try:
+            db_customers = cdb.list_all_customers()
+            for dbc in db_customers:
+                if dbc.email.lower() not in registry_emails:
+                    customers.append(dbc.to_dict())
+        except Exception as exc:
+            log.error("CustomerDB list failed in admin_customers: %s", exc)
+        finally:
+            cdb.close()
+
+    # Sort newest first by updated_at
+    customers.sort(key=lambda c: int(c.get("updated_at", 0)), reverse=True)
+    # Redact raw API key values
+    for c in customers:
+        for key in c.get("api_keys", []):
+            key.pop("raw_key", None)
+    return {"customers": customers, "total": len(customers)}
+
+
+@app.get("/admin/api-keys")
+async def admin_api_keys(x_admin_token: str | None = Header(None)):
+    """Return all issued API keys across all customers (raw keys redacted)."""
+    _require_admin_token(x_admin_token)
+    reg = API_KEY_REGISTRY._load()
+    all_keys = []
+    for customer_id, rec in reg.get("customers", {}).items():
+        for key in rec.get("api_keys", []):
+            entry = {k: v for k, v in key.items() if k != "raw_key"}
+            entry["customer_id"] = customer_id
+            entry["email"] = rec.get("email", "")
+            entry["plan"] = rec.get("plan", "")
+            all_keys.append(entry)
+    all_keys.sort(key=lambda k: int(k.get("created_at", 0)), reverse=True)
+    return {"api_keys": all_keys, "total": len(all_keys)}
+
+
+@app.get("/admin/health")
+async def admin_health(x_admin_token: str | None = Header(None)):
+    """Return server health summary visible only to admins."""
+    _require_admin_token(x_admin_token)
+    import asyncio
+
+    async def _tcp_ok(host: str, port: int, timeout: float = 2.0) -> bool:
+        """Return True if a TCP connection to host:port succeeds."""
+        try:
+            _, writer = await asyncio.wait_for(
+                asyncio.open_connection(host, port), timeout=timeout
+            )
+            writer.close()
+            try:
+                await writer.wait_closed()
+            except Exception:
+                pass
+            return True
+        except Exception:
+            return False
+
+    state_host = os.environ.get("UNIVERSAL_STATE_HOST", "127.0.0.1")
+    state_port = int(os.environ.get("UNIVERSAL_STATE_PORT", "9633"))
+    vector_host = os.environ.get("VECTOR_STATE_HOST", "127.0.0.1")
+    vector_port = int(os.environ.get("VECTOR_STATE_PORT", "9644"))
+
+    state_ok, vector_ok = await asyncio.gather(
+        _tcp_ok(state_host, state_port),
+        _tcp_ok(vector_host, vector_port),
+    )
+
+    return {
+        "webhook_server": "ok",
+        "universal_state_server": "ok" if state_ok else f"unreachable ({state_host}:{state_port})",
+        "vector_state_server": "ok" if vector_ok else f"unreachable ({vector_host}:{vector_port})",
+        "uptime_check": time.time(),
+    }
+
+
+@app.post("/admin/rotate-service-key")
+async def rotate_service_key(x_admin_token: str | None = Header(None)):
+    """Rotate the service API key used to authenticate /v1/leads.
+
+    The old key becomes 'prev' and remains valid for ~2 weeks so callers
+    can update their config without a hard cutover.  Returns the new key
+    to the admin so they can update the caller's env var.
+    """
+    _require_admin_token(x_admin_token)
+    new_key = "ahf_" + secrets.token_hex(32)
+    old_current = _uss_get(_SERVICE_KEY_USS_CURRENT) or ""
+    if old_current:
+        _uss_set(_SERVICE_KEY_USS_PREV, old_current)
+    _uss_set(_SERVICE_KEY_USS_CURRENT, new_key)
+    log.info("Service API key rotated by admin")
+    return {
+        "ok": True,
+        "new_key": new_key,
+        "previous_key_still_valid": bool(old_current),
+        "note": "Update AHANAFLOW_SERVICE_API_KEY in your caller's env and redeploy within 2 weeks.",
     }

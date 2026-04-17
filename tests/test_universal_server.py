@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+import threading
+import time
 from pathlib import Path
 
+from backend.universal_server.async_server import AsyncUniversalStateServer
 from backend.universal_server.benchmark import run_benchmark
 from backend.universal_server.protocol import decode_command, encode_response
 from backend.universal_server.server import UniversalStateServer
+from benchmark_vs_competitors import UniversalStateClient
 
 
 def test_protocol_round_trip() -> None:
@@ -32,6 +36,33 @@ def test_server_dispatch_basic_operations(tmp_path: Path) -> None:
     assert server.dispatch({"cmd": "INCR", "key": "ctr", "amount": 2})["result"] == 2
     assert server.dispatch({"cmd": "DEL", "key": "a"})["result"] == 1
     assert server.dispatch({"cmd": "GET", "key": "a"})["result"] is None
+
+    server.shutdown()
+
+
+def test_incr_accepts_integer_like_string_values(tmp_path: Path) -> None:
+    server = UniversalStateServer(tmp_path / "server_string_counter.wal", port=0)
+
+    assert server.dispatch({"cmd": "SET", "key": "ctr", "value": "0"})["ok"] is True
+    assert server.dispatch({"cmd": "INCR", "key": "ctr", "amount": 2})["result"] == 2
+    assert server.dispatch({"cmd": "GET", "key": "ctr"})["result"] == 2
+
+    server.shutdown()
+
+
+def test_server_accepts_experimental_fast_mode_overrides(tmp_path: Path) -> None:
+    server = UniversalStateServer(
+        tmp_path / "server_overrides.wal",
+        port=0,
+        durability_mode="fast",
+        fast_batch_size=1024,
+        fast_flush_interval_ms=25,
+        no_compress_threshold=256,
+    )
+
+    assert server._engine._batch_size == 1024
+    assert server._engine._flush_interval == 0.025
+    assert server._engine._NO_COMPRESS_THRESHOLD == 256
 
     server.shutdown()
 
@@ -88,6 +119,122 @@ def test_server_dispatch_mset_and_pipeline(tmp_path: Path) -> None:
     assert mincr == {"ctr:a": 3, "ctr:b": 3}
 
     server.shutdown()
+
+
+def test_async_server_resp_round_trip(tmp_path: Path) -> None:
+    server = AsyncUniversalStateServer(tmp_path / "server_async_resp.wal", port=0, durability_mode="fast", wire_protocol="resp")
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    deadline = time.time() + 5.0
+    while server.address[1] == 0 and time.time() < deadline:
+        time.sleep(0.01)
+
+    host, port = server.address
+    assert port != 0
+
+    client = UniversalStateClient(host, port, codec="resp")
+    client.connect()
+    try:
+        assert client.send({"cmd": "SET", "key": "a", "value": "1"})["result"] == "OK"
+        assert client.send({"cmd": "GET", "key": "a"})["result"] == "1"
+        assert client.send({"cmd": "INCR", "key": "ctr", "amount": 2})["result"] == 2
+        assert client.send({"cmd": "MGET", "keys": ["a", "missing"]})["result"] == ["1", None]
+        pipeline = client.send_pipeline(
+            [
+                {"cmd": "SET", "key": "pipe", "value": "v"},
+                {"cmd": "GET", "key": "pipe"},
+            ]
+        )["result"]
+        assert pipeline == ["OK", "v"]
+    finally:
+        client.close()
+        server.shutdown()
+        thread.join(timeout=5)
+
+
+def test_async_server_hybrid_redis_compat_client(tmp_path: Path) -> None:
+    """Test the hybrid wire protocol with the RedisCompatClient."""
+    from backend.universal_server.redis_client import RedisCompatClient
+
+    server = AsyncUniversalStateServer(
+        tmp_path / "server_hybrid.wal", port=0, durability_mode="fast",
+        wire_protocol="hybrid",
+    )
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    deadline = time.time() + 5.0
+    while server.address[1] == 0 and time.time() < deadline:
+        time.sleep(0.01)
+
+    host, port = server.address
+    assert port != 0
+
+    client = RedisCompatClient(host, port)
+    client.connect()
+    try:
+        # Basic operations
+        assert client.ping() == "PONG"
+        assert client.set("key1", "value1") == "OK"
+        assert client.get("key1") == "value1"
+        assert client.get("missing") is None
+        assert client.incr("counter") == 1
+        assert client.incr("counter") == 2
+        assert client.incr("counter", amount=5) == 7
+
+        # Pipeline
+        with client.pipeline() as pipe:
+            pipe.set("pk1", "pv1")
+            pipe.set("pk2", "pv2")
+            pipe.get("pk1")
+            pipe.incr("pctr")
+            results = pipe.execute()
+        assert results[0] == "OK"
+        assert results[1] == "OK"
+        assert results[2] == "pv1"
+        assert results[3] == 1
+
+        # MSET/MGET
+        assert client.mset({"m1": "a", "m2": "b"}) == "OK"
+        assert client.mget("m1", "m2") == ["a", "b"]
+
+        # DEL
+        assert client.delete("m1") == 1
+        assert client.get("m1") is None
+
+        # FLUSHALL
+        assert client.flushall() == "OK"
+        assert client.get("key1") is None
+    finally:
+        client.close()
+        server.shutdown()
+        thread.join(timeout=5)
+
+
+def test_async_server_hybrid_auto_detects_resp(tmp_path: Path) -> None:
+    """Test that hybrid mode also handles RESP clients correctly."""
+    server = AsyncUniversalStateServer(
+        tmp_path / "server_hybrid_resp.wal", port=0, durability_mode="fast",
+        wire_protocol="hybrid",
+    )
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    deadline = time.time() + 5.0
+    while server.address[1] == 0 and time.time() < deadline:
+        time.sleep(0.01)
+
+    host, port = server.address
+    assert port != 0
+
+    client = UniversalStateClient(host, port, codec="resp")
+    client.connect()
+    try:
+        assert client.send({"cmd": "SET", "key": "rkey", "value": "rval"})["result"] == "OK"
+        assert client.send({"cmd": "GET", "key": "rkey"})["result"] == "rval"
+        assert client.send({"cmd": "INCR", "key": "rctr", "amount": 3})["result"] == 3
+    finally:
+        client.close()
+        server.shutdown()
+        thread.join(timeout=5)
 
 
 def test_benchmark_smoke() -> None:

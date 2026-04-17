@@ -125,6 +125,9 @@ class CompressedStateEngine:
         *,
         sync_writes: bool = False,
         durability_mode: str = "safe",
+        fast_batch_size: int | None = None,
+        fast_flush_interval_ms: int | float | None = None,
+        no_compress_threshold: int | None = None,
     ) -> None:
         """Initialise the engine.
 
@@ -170,8 +173,18 @@ class CompressedStateEngine:
 
         # Batch state for "fast" mode.
         self._pending_batch: list[bytes] = []
-        self._batch_size: int = 256
-        self._flush_interval: float = 0.050  # 50 ms
+        self._batch_size: int = int(fast_batch_size) if fast_batch_size is not None else 256
+        if self._batch_size <= 0:
+            raise ValueError("fast_batch_size must be > 0")
+        self._flush_interval: float = (
+            float(fast_flush_interval_ms) / 1000.0 if fast_flush_interval_ms is not None else 0.050
+        )
+        if self._flush_interval <= 0.0:
+            raise ValueError("fast_flush_interval_ms must be > 0")
+        if no_compress_threshold is not None:
+            self._NO_COMPRESS_THRESHOLD = int(no_compress_threshold)
+            if self._NO_COMPRESS_THRESHOLD < 0:
+                raise ValueError("no_compress_threshold must be >= 0")
         self._last_batch_flush: float = time.time()
         self._closed: bool = False
         self._flush_event: threading.Event = threading.Event()
@@ -428,7 +441,12 @@ class CompressedStateEngine:
 
     def _incr_locked(self, key: str, amount: int = 1, ttl_seconds: int | None = None) -> int:
         current = self._get_locked(key, 0)
-        if not isinstance(current, int):
+        if isinstance(current, str):
+            try:
+                current = int(current)
+            except ValueError as exc:
+                raise TypeError(f"Cannot increment non-integer key: {key}") from exc
+        elif not isinstance(current, int):
             raise TypeError(f"Cannot increment non-integer key: {key}")
         updated = current + amount
         now = time.time()

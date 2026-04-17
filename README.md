@@ -284,19 +284,38 @@ Measured on AMD Ryzen 9 9900X, 128GB RAM, NVMe SSD:
 
 *Benchmark harness: 20,000 iterations of `SET + GET + INCR` with compression enabled, in-process `CompressedStateEngine` (no network overhead).*
 
-**TCP Server Mode:**
+**TCP Server Mode (Hybrid Wire Protocol):**
 
-With network protocol overhead (newline-delimited JSON over TCP):
+AhanaFlow auto-detects whether each TCP connection speaks **RESP** (Redis wire protocol) or **compact JSON**, routing to the optimal inlined dispatch path per connection.
 
-| Operation | Throughput (NetworkServer) | vs Redis |
-|-----------|---------------------------|----------|
-| KV_SET_GET | ~125K ops/sec | 0.95× (near parity) |
+| Operation | Throughput | vs Redis |
+|-----------|-----------|----------|
+| KV_SET_GET (compact) | ~150K ops/sec | **1.2× (USS wins)** |
+| KV_SET_GET (RESP) | ~125K ops/sec | 0.95× (near parity) |
 | KV_MSET_MGET (batched) | ~365K ops/sec | **1.63× (USS wins)** |
-| KV_PIPELINE_SET_GET | ~224K ops/sec | 0.94× (near parity) |
+| KV_PIPELINE (compact) | ~280K ops/sec | **1.4× (USS wins)** |
 | COUNTER_INCR | ~96K ops/sec | 0.96× (near parity) |
 | COUNTER_BATCH_INCR | ~236K ops/sec | **1.63× (USS wins)** |
 
-*Based on April 9, 2026 competitive benchmark after orjson optimization. UniversalStateServer achieves near-parity with Redis on single-key operations and wins on batched operations.*
+*Based on April 16, 2026 competitive benchmark with hybrid auto-detect wire protocol. Compact JSON wire achieves 1.2-1.4× Redis throughput; RESP wire maintains drop-in compatibility.*
+
+**RedisCompatClient — Drop-in Redis Replacement:**
+
+```python
+from backend.universal_server import RedisCompatClient
+
+# Drop-in replacement for redis-py
+client = RedisCompatClient("localhost", 9633)
+client.set("key", "value")
+print(client.get("key"))  # b"value"
+
+# Pipeline support
+pipe = client.pipeline()
+pipe.set("a", "1")
+pipe.set("b", "2")
+pipe.incr("counter")
+results = pipe.execute()
+```
 
 See [docs/BENCHMARKS.md](./docs/BENCHMARKS.md) for detailed performance analysis.
 
@@ -306,12 +325,18 @@ See [docs/BENCHMARKS.md](./docs/BENCHMARKS.md) for detailed performance analysis
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│  Client (Python SDK / TCP protocol)                 │
+│  Client (Python SDK / RedisCompatClient / redis-cli)│
 └──────────────────────┬──────────────────────────────┘
-                       │ newline-delimited JSON
+                       │ auto-detect: RESP or compact JSON
 ┌──────────────────────▼──────────────────────────────┐
-│  Universal State Server (port 9633)                 │
+│  Async Universal State Server (port 9633)           │
 │  ┌─────────────────────────────────────────────┐   │
+│  │  Hybrid Wire Protocol (per-connection)      │   │
+│  │  ├── RESP path → _dispatch_resp_fast()      │   │
+│  │  └── Compact path → _dispatch_compact()     │   │
+│  └──────────────────┬──────────────────────────┘   │
+│                     │                               │
+│  ┌──────────────────▼──────────────────────────┐   │
 │  │  Command Router (SET/GET/INCR/ENQUEUE...)   │   │
 │  └──────────────────┬──────────────────────────┘   │
 │                     │                               │

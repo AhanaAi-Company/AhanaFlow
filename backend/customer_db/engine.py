@@ -72,6 +72,17 @@ class CustomerDatabaseEngine:
             "key": email_index_key(customer.email),
             "value": customer.customer_id,
         })
+        
+        # Maintain all-customers index
+        idx_resp = self._send({"cmd": "GET", "key": "customers:all:index"})
+        all_ids = json.loads(idx_resp.get("result") or "[]")
+        if customer.customer_id not in all_ids:
+            all_ids.append(customer.customer_id)
+            self._send({
+                "cmd": "SET",
+                "key": "customers:all:index",
+                "value": json.dumps(all_ids),
+            })
     
     def get_customer(self, customer_id: str) -> Optional[Customer]:
         """Get customer by ID"""
@@ -312,6 +323,17 @@ class CustomerDatabaseEngine:
         counter_key = f"usage:compressed_bytes:{customer_id}"
         self._send({"cmd": "INCR", "key": counter_key, "amount": bytes_compressed})
     
+    def list_all_customers(self) -> list["Customer"]:
+        """List all customer records from the all-customers index"""
+        idx_resp = self._send({"cmd": "GET", "key": "customers:all:index"})
+        all_ids = json.loads(idx_resp.get("result") or "[]")
+        customers = []
+        for cid in all_ids:
+            c = self.get_customer(cid)
+            if c:
+                customers.append(c)
+        return customers
+
     def get_usage_stats(self, customer_id: str) -> dict[str, int]:
         """Get customer usage statistics"""
         api_calls_resp = self._send({

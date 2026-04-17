@@ -67,9 +67,9 @@ class _UniversalHandler(socketserver.StreamRequestHandler):
                                 key_hash = hashlib.sha256(api_key.encode()).hexdigest()[:16]
                                 security.check_rate_limit(key_hash, security.config.rate_limit_per_key)
 
-                            response = dispatch(command, security)
+                            response = dispatch(command, security, compact_response=compact_response)
                     else:
-                        response = dispatch(command, None)
+                        response = dispatch(command, None, compact_response=compact_response)
 
                 except ProtocolError as exc:
                     response = {"ok": False, "error": str(exc)}
@@ -107,9 +107,18 @@ class UniversalStateServer:
         port: int = 9633,
         *,
         durability_mode: str = "safe",
+        fast_batch_size: int | None = None,
+        fast_flush_interval_ms: int | float | None = None,
+        no_compress_threshold: int | None = None,
         security_config: SecurityConfig | None = None,
     ) -> None:
-        self._engine = CompressedStateEngine(wal_path, durability_mode=durability_mode)
+        self._engine = CompressedStateEngine(
+            wal_path,
+            durability_mode=durability_mode,
+            fast_batch_size=fast_batch_size,
+            fast_flush_interval_ms=fast_flush_interval_ms,
+            no_compress_threshold=no_compress_threshold,
+        )
         self._host = host
         self._port = port
         self._security = SecurityMiddleware(security_config) if security_config else None
@@ -142,7 +151,13 @@ class UniversalStateServer:
         if self._security:
             self._security.close()
 
-    def dispatch(self, command: dict[str, Any], security: SecurityMiddleware | None = None) -> dict[str, Any]:
+    def dispatch(
+        self,
+        command: dict[str, Any],
+        security: SecurityMiddleware | None = None,
+        *,
+        compact_response: bool = False,
+    ) -> dict[str, Any]:
         cmd = command["cmd"]
 
         if cmd == "PING":
@@ -156,24 +171,137 @@ class UniversalStateServer:
             commands = command.get("commands")
             if not isinstance(commands, list) or not commands:
                 raise ProtocolError("commands must be a non-empty array")
-            results: list[dict[str, Any]] = []
             # Acquire the engine lock ONCE for the whole pipeline so all
             # sub-commands execute atomically — no interleaving from other clients.
             with self._engine._lock:
-                for subcommand in commands:
-                    if not isinstance(subcommand, dict):
-                        raise ProtocolError("pipeline commands must be objects")
-                    nested = dict(subcommand)
-                    nested_cmd = nested.get("cmd")
-                    if not isinstance(nested_cmd, str) or not nested_cmd:
-                        raise ProtocolError("pipeline command missing cmd")
-                    nested["cmd"] = nested_cmd.upper()
-                    if nested["cmd"] == "PIPELINE":
-                        raise ProtocolError("nested PIPELINE commands are not supported")
-                    results.append(self._dispatch_single(nested, security))
+                results = self._dispatch_pipeline_locked(commands, security, compact_response=compact_response)
             return {"ok": True, "result": results}
 
         return self._dispatch_single(command, security)
+
+    def _dispatch_pipeline_locked(
+        self,
+        commands: list[dict[str, Any]],
+        security: SecurityMiddleware | None = None,
+        *,
+        compact_response: bool = False,
+    ) -> list[Any]:
+        results: list[Any] = []
+        engine = self._engine
+
+        for subcommand in commands:
+            if not isinstance(subcommand, dict):
+                raise ProtocolError("pipeline commands must be objects")
+            cmd = subcommand.get("cmd")
+            if not isinstance(cmd, str) or not cmd:
+                raise ProtocolError("pipeline command missing cmd")
+            if not cmd.isupper():
+                cmd = cmd.upper()
+            if cmd == "PIPELINE":
+                raise ProtocolError("nested PIPELINE commands are not supported")
+
+            if cmd == "SET":
+                key = _require_str(subcommand, "key")
+                value = subcommand.get("value")
+                ttl = subcommand.get("ttl_seconds")
+                if ttl is not None:
+                    ttl = int(ttl)
+                if security:
+                    security.validate_key(key)
+                    security.validate_value_size(value)
+                engine._put_locked(key, value, ttl_seconds=ttl)
+                results.append("OK" if compact_response else {"ok": True, "result": "OK"})
+                continue
+
+            if cmd == "GET":
+                key = _require_str(subcommand, "key")
+                if security:
+                    security.validate_key(key)
+                value = engine._get_locked(key)
+                results.append(value if compact_response else {"ok": True, "result": value})
+                continue
+
+            if cmd == "DEL":
+                key = _require_str(subcommand, "key")
+                if security:
+                    security.validate_key(key)
+                deleted = engine._delete_locked(key)
+                result = 1 if deleted else 0
+                results.append(result if compact_response else {"ok": True, "result": result})
+                continue
+
+            if cmd == "INCR":
+                key = _require_str(subcommand, "key")
+                amount = int(subcommand.get("amount", 1))
+                ttl = subcommand.get("ttl_seconds")
+                if ttl is not None:
+                    ttl = int(ttl)
+                if security:
+                    security.validate_key(key)
+                value = engine._incr_locked(key, amount=amount, ttl_seconds=ttl)
+                results.append(value if compact_response else {"ok": True, "result": value})
+                continue
+
+            if cmd == "MSET":
+                values = subcommand.get("values")
+                if not isinstance(values, dict) or not values:
+                    raise ProtocolError("values must be a non-empty object")
+                ttl = subcommand.get("ttl_seconds")
+                if ttl is not None:
+                    ttl = int(ttl)
+                if security:
+                    for key, value in values.items():
+                        if not isinstance(key, str) or not key:
+                            raise ProtocolError("MSET keys must be non-empty strings")
+                        security.validate_key(key)
+                        security.validate_value_size(value)
+                for key, value in values.items():
+                    engine._put_locked(str(key), value, ttl_seconds=ttl)
+                result = len(values)
+                results.append(result if compact_response else {"ok": True, "result": result})
+                continue
+
+            if cmd == "MGET":
+                keys_arg = subcommand.get("keys")
+                if not isinstance(keys_arg, list):
+                    raise ProtocolError("keys must be an array")
+                if security:
+                    for key in keys_arg:
+                        if not isinstance(key, str):
+                            raise ProtocolError("keys must be strings")
+                        security.validate_key(key)
+                values = [engine._get_locked(key) for key in keys_arg]
+                results.append(values if compact_response else {"ok": True, "result": values})
+                continue
+
+            if cmd == "MINCR":
+                updates = subcommand.get("updates")
+                if not isinstance(updates, list) or not updates:
+                    raise ProtocolError("updates must be a non-empty array")
+                ttl = subcommand.get("ttl_seconds")
+                if ttl is not None:
+                    ttl = int(ttl)
+                normalized_updates: list[dict[str, int]] = []
+                for update in updates:
+                    if not isinstance(update, dict):
+                        raise ProtocolError("MINCR updates must be objects")
+                    key = _require_str(update, "key")
+                    amount = int(update.get("amount", 1))
+                    if security:
+                        security.validate_key(key)
+                    normalized_updates.append({"key": key, "amount": amount})
+                result = {
+                    item["key"]: engine._incr_locked(item["key"], amount=item["amount"], ttl_seconds=ttl)
+                    for item in normalized_updates
+                }
+                results.append(result if compact_response else {"ok": True, "result": result})
+                continue
+
+            nested = dict(subcommand)
+            nested["cmd"] = cmd
+            results.append(self._dispatch_single(nested, security))
+
+        return results
 
     def _dispatch_single(
         self,
