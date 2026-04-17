@@ -8,14 +8,42 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import logging
 import sys
 from pathlib import Path
+from typing import Any
 
-REPO_ROOT = Path(__file__).resolve().parents[4]
+def _find_repo_root() -> Path:
+    current = Path(__file__).resolve()
+    for parent in current.parents:
+        if (parent / "tools").exists():
+            return parent
+    return current.parents[2]
+
+
+REPO_ROOT = _find_repo_root()
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from tools.acp_logging import get_logger
+try:
+    from tools.acp_logging import get_logger
+except ModuleNotFoundError:  # pragma: no cover
+    class _CompatLogger:
+        def __init__(self, logger: logging.Logger) -> None:
+            self._logger = logger
+
+        def info(self, message: str, **fields: Any) -> None:
+            if fields:
+                self._logger.info("%s | %s", message, fields)
+                return
+            self._logger.info(message)
+
+    def get_logger(name: str) -> _CompatLogger:
+        logger = logging.getLogger(name)
+        if not logger.handlers:
+            logging.basicConfig(level=logging.INFO)
+        return _CompatLogger(logger)
+
 from .server import VectorStateServerV2
 
 log = get_logger("vector_server_cli")

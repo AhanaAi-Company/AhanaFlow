@@ -61,99 +61,18 @@ Canonical buyer-facing docs in this repo:
 
 ## Quick Start
 
-### Installation
-
+Run single-node:
 ```bash
-# Community Edition (free for non-commercial use)
-pip install ahanaflow
-
-# Or install from source
-git clone https://github.com/AhanaAI-Company/ahanaflow.git
-cd ahanaflow
-pip install -e .
+docker compose --profile single-node up -d
 ```
-
-### Basic Usage (In-Process)
-
-```python
-from backend.state_engine import CompressedStateEngine
-
-# Create a compressed state engine
-with CompressedStateEngine("app.wal", durability_mode="safe") as engine:
-    # Key-value operations
-    engine.put("user:123", {"name": "Alice", "plan": "pro"})
-    user = engine.get("user:123")
-    
-    # Atomic counters
-    engine.incr("page_views", 1)
-    
-    # TTL keys (expire after 1 hour)
-    engine.put("session:abc", {"token": "xyz"}, ttl_seconds=3600)
-```
-
-### TCP Server Mode
-
+Run the HA pilot for controlled multi-node pilots; see [High Availability](./docs/DEPLOYMENT_GUIDE.md#3-high-availability):
 ```bash
-# Start the universal server (KV + queues + streams)
-python -m backend.universal_server.cli serve --port 9633 --host 0.0.0.0
-
-# Start the vector server (vector search)
-python -m backend.universal_server.cli serve-vector-v2 --port 9644 --host 0.0.0.0
+docker compose --profile ha-pilot up -d
 ```
-
-### Python Client (TCP)
-
+Smoke-test state plus vector in one script:
 ```python
-import socket
-import json
-
-def send_command(sock, cmd):
-    sock.sendall((json.dumps(cmd) + "\n").encode())
-    return json.loads(sock.recv(16384).decode().strip())
-
-# Connect
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-sock.connect(("localhost", 9633))
-
-# Set a value
-send_command(sock, {"cmd": "SET", "key": "msg", "value": "Hello, AhanaFlow!"})
-
-# Get the value
-result = send_command(sock, {"cmd": "GET", "key": "msg"})
-print(result["result"])  # "Hello, AhanaFlow!"
-
-# Increment counter
-send_command(sock, {"cmd": "INCR", "key": "counter", "amount": 10})
-
-# Enqueue job
-send_command(sock, {"cmd": "ENQUEUE", "queue": "jobs", "payload": {"type": "email", "to": "user@example.com"}})
-
-# Dequeue job
-job = send_command(sock, {"cmd": "DEQUEUE", "queue": "jobs"})
-print(job["result"])  # {"type": "email", "to": "user@example.com"}
-```
-
-### Vector Search
-
-```python
-from backend.vector_server import VectorStateServerV2
-
-# Create vector engine
-engine = VectorStateServerV2("vectors.wal")
-
-# Create collection (1536 dimensions for OpenAI embeddings)
-engine.create_collection("documents", dimensions=1536, metric="cosine")
-
-# Upsert vectors
-engine.upsert("documents", "doc_1", embedding_vector_1536, 
-              metadata={"title": "README.md"},
-              payload={"text": "Full document text..."})
-
-# Search similar vectors
-results = engine.query("documents", query_vector_1536, top_k=10)
-for match in results:
-    print(f"{match['id']}: similarity={match['score']:.4f}")
-    print(f"  Title: {match['metadata']['title']}")
+import json,socket; call=lambda p,c:(lambda s:(s.sendall((json.dumps(c)+"\n").encode()),json.loads(s.recv(16384).decode()))[1])(socket.create_connection(("127.0.0.1",p)))
+call(9633,{"cmd":"SET","key":"tenant:acme:plan","value":"pilot"}); call(9644,{"cmd":"VECTOR_CREATE","collection":"docs","dimensions":3,"metric":"cosine"}); call(9644,{"cmd":"VECTOR_UPSERT","collection":"docs","id":"doc-1","vector":[1,0,0],"payload":{"text":"reset password"}}); print(call(9644,{"cmd":"VECTOR_QUERY","collection":"docs","vector":[1,0,0],"top_k":1})["result"]["hits"][0])
 ```
 
 ---
