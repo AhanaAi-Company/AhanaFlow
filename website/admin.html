@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AhanaFlow Admin</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #21262d;
+    --border: #30363d;
+    --accent: #00c8a0;
+    --accent2: #0d9488;
+    --text: #e6edf3;
+    --muted: #7d8590;
+    --danger: #f85149;
+    --warning: #d29922;
+    --success: #3fb950;
+    --pro: #3b82f6;
+    --team: #8b5cf6;
+    --enterprise: #f59e0b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 14px; min-height: 100vh; }
+
+  /* Login */
+  #login-screen {
+    display: flex; align-items: center; justify-content: center; min-height: 100vh;
+    background: radial-gradient(ellipse at 50% 30%, #0d2a25 0%, var(--bg) 70%);
+  }
+  .login-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 40px; width: 360px; text-align: center;
+  }
+  .login-card .logo { font-size: 28px; font-weight: 700; color: var(--accent); margin-bottom: 6px; }
+  .login-card .subtitle { color: var(--muted); margin-bottom: 32px; font-size: 13px; }
+  .login-card input {
+    width: 100%; padding: 12px 16px; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-size: 14px; margin-bottom: 16px; outline: none;
+    transition: border-color 0.2s;
+  }
+  .login-card input:focus { border-color: var(--accent); }
+  .login-card button {
+    width: 100%; padding: 12px; background: var(--accent); border: none; border-radius: 8px;
+    color: #000; font-weight: 700; font-size: 15px; cursor: pointer; transition: background 0.2s;
+  }
+  .login-card button:hover { background: var(--accent2); }
+  .login-error { color: var(--danger); font-size: 12px; margin-top: 12px; display: none; }
+
+  /* Dashboard layout */
+  #dashboard { display: none; flex-direction: column; min-height: 100vh; }
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px; height: 56px; background: var(--surface); border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-brand { font-size: 18px; font-weight: 700; color: var(--accent); }
+  .header-brand span { color: var(--muted); font-weight: 400; font-size: 13px; margin-left: 10px; }
+  .header-actions { display: flex; gap: 12px; align-items: center; }
+  .btn-logout {
+    padding: 6px 14px; background: transparent; border: 1px solid var(--border);
+    border-radius: 6px; color: var(--muted); font-size: 12px; cursor: pointer; transition: all 0.2s;
+  }
+  .btn-logout:hover { border-color: var(--danger); color: var(--danger); }
+
+  .main-layout { display: flex; flex: 1; }
+  nav {
+    width: 200px; background: var(--surface); border-right: 1px solid var(--border);
+    padding: 20px 12px; flex-shrink: 0; position: sticky; top: 56px; height: calc(100vh - 56px); overflow-y: auto;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px;
+    cursor: pointer; color: var(--muted); font-size: 13px; font-weight: 500; transition: all 0.15s;
+    margin-bottom: 2px;
+  }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: rgba(0,200,160,0.12); color: var(--accent); }
+  .nav-item svg { flex-shrink: 0; }
+
+  main { flex: 1; padding: 28px; overflow-y: auto; }
+
+  /* Stat cards */
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px; }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px;
+  }
+  .stat-label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+  .stat-value { font-size: 32px; font-weight: 700; color: var(--accent); }
+  .stat-sub { color: var(--muted); font-size: 12px; margin-top: 4px; }
+
+  /* Plan badges */
+  .badge {
+    display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .badge-pro { background: rgba(59,130,246,0.15); color: var(--pro); }
+  .badge-team { background: rgba(139,92,246,0.15); color: var(--team); }
+  .badge-enterprise { background: rgba(245,158,11,0.15); color: var(--enterprise); }
+  .badge-free { background: rgba(125,133,144,0.15); color: var(--muted); }
+  .badge-active { background: rgba(63,185,80,0.15); color: var(--success); }
+  .badge-lead { background: rgba(0,200,160,0.12); color: var(--accent); }
+  .badge-canceled { background: rgba(248,81,73,0.15); color: var(--danger); }
+  .badge-past_due { background: rgba(210,153,34,0.15); color: var(--warning); }
+
+  /* Health indicators */
+  .health-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+  .health-ok { background: var(--success); box-shadow: 0 0 6px var(--success); }
+  .health-error { background: var(--danger); box-shadow: 0 0 6px var(--danger); }
+  .health-unknown { background: var(--muted); }
+
+  /* Tables */
+  .section-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;
+  }
+  .section-title { font-size: 16px; font-weight: 600; }
+  .section-count { color: var(--muted); font-size: 12px; margin-left: 8px; }
+  .btn-refresh {
+    padding: 6px 12px; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 6px; color: var(--muted); font-size: 12px; cursor: pointer; transition: all 0.2s;
+  }
+  .btn-refresh:hover { border-color: var(--accent); color: var(--accent); }
+  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    padding: 10px 16px; text-align: left; font-size: 11px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+  td { padding: 11px 16px; border-bottom: 1px solid var(--border); font-size: 13px; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+  .email-cell { color: var(--text); font-weight: 500; }
+  .id-cell { color: var(--muted); font-family: monospace; font-size: 11px; }
+
+  /* Search */
+  .search-bar {
+    width: 100%; padding: 10px 14px; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-size: 13px; outline: none; transition: border-color 0.2s;
+    margin-bottom: 16px;
+  }
+  .search-bar:focus { border-color: var(--accent); }
+
+  /* Tabs */
+  .section-tab { display: none; }
+  .section-tab.active { display: block; }
+
+  /* Health grid */
+  .health-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+  .health-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px;
+  }
+  .health-service { font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+  .health-status { font-size: 13px; display: flex; align-items: center; }
+
+  /* Empty state */
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .empty-state svg { opacity: 0.3; margin-bottom: 16px; }
+
+  /* Loading spinner */
+  .spinner {
+    display: inline-block; width: 16px; height: 16px; border: 2px solid var(--border);
+    border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* CSV export */
+  .btn-export {
+    padding: 6px 12px; background: transparent; border: 1px solid var(--border);
+    border-radius: 6px; color: var(--muted); font-size: 12px; cursor: pointer;
+  }
+  .btn-export:hover { border-color: var(--accent); color: var(--accent); }
+
+  .btn-primary,
+  .btn-secondary,
+  .btn-copy {
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-primary {
+    border: 1px solid var(--accent);
+    background: var(--accent);
+    color: #03120f;
+  }
+  .btn-primary:hover { background: var(--accent2); border-color: var(--accent2); }
+  .btn-secondary,
+  .btn-copy {
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+  }
+  .btn-secondary:hover,
+  .btn-copy:hover { border-color: var(--accent); color: var(--accent); }
+
+  .action-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .deploy-grid {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 18px;
+  }
+
+  .deploy-stack {
+    display: grid;
+    gap: 18px;
+  }
+
+  .deploy-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+  }
+
+  .deploy-panel h3 {
+    margin-bottom: 8px;
+    font-size: 15px;
+  }
+
+  .deploy-copy {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.6;
+    margin-bottom: 14px;
+  }
+
+  .deploy-callout {
+    padding: 14px 16px;
+    border: 1px solid rgba(0, 200, 160, 0.22);
+    border-radius: 10px;
+    background: rgba(0, 200, 160, 0.08);
+    color: var(--text);
+    font-size: 12px;
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+
+  .deploy-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .deploy-field {
+    display: grid;
+    gap: 6px;
+  }
+
+  .deploy-field-wide {
+    grid-column: 1 / -1;
+  }
+
+  .deploy-field label {
+    color: var(--muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .deploy-field input,
+  .deploy-field textarea {
+    width: 100%;
+    padding: 11px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    font: inherit;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .deploy-field input:focus,
+  .deploy-field textarea:focus { border-color: var(--accent); }
+
+  .deploy-field textarea {
+    min-height: 112px;
+    resize: vertical;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 12px;
+  }
+
+  .field-hint {
+    color: var(--muted);
+    font-size: 11px;
+  }
+
+  .output-grid {
+    display: grid;
+    gap: 16px;
+  }
+
+  .code-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .code-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+
+  .code-meta {
+    display: grid;
+    gap: 2px;
+  }
+
+  .code-title {
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .code-subtitle {
+    color: var(--muted);
+    font-size: 11px;
+  }
+
+  .code-block {
+    margin: 0;
+    padding: 16px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--text);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  @media (max-width: 768px) {
+    nav { display: none; }
+    main { padding: 16px; }
+    .stat-grid { grid-template-columns: 1fr 1fr; }
+    .deploy-grid,
+    .deploy-form-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ───── Login screen ───── -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="logo">AhanaFlow</div>
+    <div class="subtitle">Admin Dashboard</div>
+    <input type="password" id="pw-input" placeholder="Admin password" autocomplete="current-password">
+    <button onclick="doLogin()">Sign In</button>
+    <div class="login-error" id="login-error">Incorrect password. Try again.</div>
+  </div>
+</div>
+
+<!-- ───── Dashboard ───── -->
+<div id="dashboard">
+  <header>
+    <div class="header-brand">AhanaFlow <span>Admin</span></div>
+    <div class="header-actions">
+      <span id="header-time" style="color:var(--muted);font-size:12px;"></span>
+      <button class="btn-logout" onclick="doLogout()">Sign out</button>
+    </div>
+  </header>
+
+  <div class="main-layout">
+    <nav>
+      <div class="nav-item active" onclick="showTab('overview')" id="nav-overview">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Overview
+      </div>
+      <div class="nav-item" onclick="showTab('customers')" id="nav-customers">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Customers
+      </div>
+      <div class="nav-item" onclick="showTab('apikeys')" id="nav-apikeys">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+        API Keys
+      </div>
+      <div class="nav-item" onclick="showTab('health')" id="nav-health">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Health
+      </div>
+      <div class="nav-item" onclick="showTab('deploykit')" id="nav-deploykit">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
+        Deploy Kit
+      </div>
+    </nav>
+
+    <main>
+
+      <!-- Overview tab -->
+      <div class="section-tab active" id="tab-overview">
+        <div class="stat-grid" id="stat-grid">
+          <div class="stat-card"><div class="stat-label">Total Customers</div><div class="stat-value" id="stat-total">–</div></div>
+          <div class="stat-card"><div class="stat-label">Active Subs</div><div class="stat-value" id="stat-active">–</div></div>
+          <div class="stat-card"><div class="stat-label">DB Leads</div><div class="stat-value" id="stat-leads">–</div><div class="stat-sub">direct captures</div></div>
+          <div class="stat-card"><div class="stat-label">Pro Plans</div><div class="stat-value" id="stat-pro">–</div><div class="stat-sub">$9.99/mo</div></div>
+          <div class="stat-card"><div class="stat-label">Team Plans</div><div class="stat-value" id="stat-team">–</div><div class="stat-sub">$19.99/mo</div></div>
+          <div class="stat-card"><div class="stat-label">Enterprise</div><div class="stat-value" id="stat-ent">–</div><div class="stat-sub">$49.99/mo</div></div>
+          <div class="stat-card"><div class="stat-label">API Keys Issued</div><div class="stat-value" id="stat-keys">–</div></div>
+        </div>
+
+        <!-- Recent customers preview -->
+        <div class="section-header">
+          <div><span class="section-title">Recent Customers</span></div>
+          <button class="btn-refresh" onclick="loadSummary();loadCustomers();">Refresh</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Email</th><th>Plan</th><th>Status</th><th>Customer ID</th></tr></thead>
+            <tbody id="recent-customers-body"><tr><td colspan="4" style="text-align:center;padding:20px;color:var(--muted)"><span class="spinner"></span></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Customers tab -->
+      <div class="section-tab" id="tab-customers">
+        <div class="section-header">
+          <div><span class="section-title">All Customers</span><span class="section-count" id="customers-count"></span></div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn-export" onclick="exportCSV('customers')">Export CSV</button>
+            <button class="btn-refresh" onclick="loadCustomers()">Refresh</button>
+          </div>
+        </div>
+        <input class="search-bar" id="customers-search" type="text" placeholder="Search by email or customer ID…" oninput="filterCustomers()">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Email</th><th>Plan</th><th>Status</th><th>API Keys</th><th>Customer ID</th><th>Updated</th></tr></thead>
+            <tbody id="customers-body"><tr><td colspan="6" style="text-align:center;padding:20px;color:var(--muted)"><span class="spinner"></span></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- API Keys tab -->
+      <div class="section-tab" id="tab-apikeys">
+        <div class="section-header">
+          <div><span class="section-title">API Keys</span><span class="section-count" id="apikeys-count"></span></div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn-export" onclick="exportCSV('apikeys')">Export CSV</button>
+            <button class="btn-refresh" onclick="loadApiKeys()">Refresh</button>
+          </div>
+        </div>
+        <input class="search-bar" id="apikeys-search" type="text" placeholder="Search by email or key ID…" oninput="filterApiKeys()">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Email</th><th>Plan</th><th>Label</th><th>Key ID</th><th>Status</th><th>Created</th></tr></thead>
+            <tbody id="apikeys-body"><tr><td colspan="6" style="text-align:center;padding:20px;color:var(--muted)"><span class="spinner"></span></td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Health tab -->
+      <div class="section-tab" id="tab-health">
+        <div class="section-header">
+          <div><span class="section-title">Service Health</span></div>
+          <button class="btn-refresh" onclick="loadHealth()">Refresh</button>
+        </div>
+        <div class="health-grid" id="health-grid">
+          <div class="health-card"><div class="health-service">Loading…</div></div>
+        </div>
+      </div>
+
+      <div class="section-tab" id="tab-deploykit">
+        <div class="section-header">
+          <div><span class="section-title">Deployment Kit</span><span class="section-count">local-only generator</span></div>
+          <div class="action-row">
+            <button class="btn-secondary" onclick="loadDeployExample()">Load Example Values</button>
+            <button class="btn-primary" onclick="renderDeployOutputs()">Generate Outputs</button>
+          </div>
+        </div>
+
+        <div class="deploy-callout">
+          Paste deploy-time keys here to generate the runtime files locally in your browser. This page does not submit the key material to the backend; it only formats `.env.production`, secret-file contents, and Kubernetes file-based commands so deployment is faster and less error-prone.
+        </div>
+
+        <div class="deploy-grid">
+          <div class="deploy-stack">
+            <div class="deploy-panel">
+              <h3>Public Runtime And Metadata</h3>
+              <p class="deploy-copy">These values are safe to keep in `.env.production` or normal runtime config.</p>
+              <div class="deploy-form-grid">
+                <div class="deploy-field"><label for="deploy-public-key">PUBLIC_STRIPE_PUBLISHABLE_KEY</label><input id="deploy-public-key" type="text" placeholder="pk_live_..."></div>
+                <div class="deploy-field"><label for="deploy-from-email">FROM_EMAIL</label><input id="deploy-from-email" type="email" placeholder="licenses@example.com"></div>
+                <div class="deploy-field"><label for="deploy-price-pro">STRIPE_PRICE_PRO_MONTHLY</label><input id="deploy-price-pro" type="text" placeholder="price_..."></div>
+                <div class="deploy-field"><label for="deploy-price-team">STRIPE_PRICE_TEAM_MONTHLY</label><input id="deploy-price-team" type="text" placeholder="price_..."></div>
+                <div class="deploy-field"><label for="deploy-price-enterprise">STRIPE_PRICE_ENTERPRISE_MONTHLY</label><input id="deploy-price-enterprise" type="text" placeholder="price_..."></div>
+                <div class="deploy-field"><label for="deploy-artifact-ttl">AHANAFLOW_PRO_ARTIFACT_TTL_SECONDS</label><input id="deploy-artifact-ttl" type="number" min="60" step="60" placeholder="900"></div>
+                <div class="deploy-field deploy-field-wide"><label for="deploy-success-url">STRIPE_CHECKOUT_SUCCESS_URL</label><input id="deploy-success-url" type="url" placeholder="https://www.ahanaflow.com/#pricing"></div>
+                <div class="deploy-field deploy-field-wide"><label for="deploy-cancel-url">STRIPE_CHECKOUT_CANCEL_URL</label><input id="deploy-cancel-url" type="url" placeholder="https://www.ahanaflow.com/#pricing"></div>
+                <div class="deploy-field"><label for="deploy-smtp-host">SMTP_HOST</label><input id="deploy-smtp-host" type="text" placeholder="smtp.example.com"></div>
+                <div class="deploy-field"><label for="deploy-smtp-user">SMTP_USER</label><input id="deploy-smtp-user" type="text" placeholder="service@example.com"></div>
+                <div class="deploy-field"><label for="deploy-artifact-id">AHANAFLOW_PRO_ARTIFACT_ID</label><input id="deploy-artifact-id" type="text" placeholder="ahanaflow-pro-codec"></div>
+                <div class="deploy-field"><label for="deploy-artifact-version">AHANAFLOW_PRO_ARTIFACT_VERSION</label><input id="deploy-artifact-version" type="text" placeholder="2026.04"></div>
+                <div class="deploy-field deploy-field-wide"><label for="deploy-artifact-url">AHANAFLOW_PRO_ARTIFACT_URL</label><input id="deploy-artifact-url" type="url" placeholder="https://api.ahanaflow.com/private/ahanaflow-pro-codec.aarm"></div>
+                <div class="deploy-field deploy-field-wide"><label for="deploy-artifact-sha">AHANAFLOW_PRO_ARTIFACT_SHA256</label><input id="deploy-artifact-sha" type="text" placeholder="64-character sha256 digest"></div>
+                <div class="deploy-field deploy-field-wide"><label for="deploy-sealed-policy-path">AHANAFLOW_SEALED_POLICY_FILE</label><input id="deploy-sealed-policy-path" type="text" value="/run/secrets/ahanaflow/security.policy"></div>
+              </div>
+            </div>
+
+            <div class="deploy-panel">
+              <h3>Secret File Payloads</h3>
+              <p class="deploy-copy">These values are written into secret files. The generated `.env.production` uses only the corresponding `*_FILE` variables.</p>
+              <div class="deploy-form-grid">
+                <div class="deploy-field"><label for="deploy-stripe-secret">STRIPE_SECRET_KEY</label><input id="deploy-stripe-secret" type="password" placeholder="sk_live_..."></div>
+                <div class="deploy-field"><label for="deploy-webhook-secret">STRIPE_WEBHOOK_SECRET</label><input id="deploy-webhook-secret" type="password" placeholder="whsec_..."></div>
+                <div class="deploy-field"><label for="deploy-signing-key">AHANAFLOW_SIGNING_KEY</label><textarea id="deploy-signing-key" placeholder="license signing private key"></textarea></div>
+                <div class="deploy-field"><label for="deploy-sealed-policy-key">AHANAFLOW_SEALED_POLICY_KEY</label><input id="deploy-sealed-policy-key" type="password" placeholder="fernet key"></div>
+                <div class="deploy-field"><label for="deploy-admin-key">AHANAFLOW_ADMIN_API_KEY</label><input id="deploy-admin-key" type="password" placeholder="hex admin api key"></div>
+                <div class="deploy-field"><label for="deploy-service-key">AHANAFLOW_SERVICE_API_KEY</label><input id="deploy-service-key" type="password" placeholder="hex service api key"></div>
+                <div class="deploy-field"><label for="deploy-artifact-signing-key">AHANAFLOW_PRO_ARTIFACT_SIGNING_KEY</label><input id="deploy-artifact-signing-key" type="password" placeholder="32-byte secret"></div>
+                <div class="deploy-field"><label for="deploy-artifact-master-key">AHANAFLOW_PRO_ARTIFACT_MASTER_KEY</label><input id="deploy-artifact-master-key" type="password" placeholder="32-byte secret"></div>
+                <div class="deploy-field"><label for="deploy-smtp-pass">SMTP_PASS</label><input id="deploy-smtp-pass" type="password" placeholder="smtp password"></div>
+                <div class="deploy-field deploy-field-wide">
+                  <label for="deploy-sealed-policy-note">Sealed Policy File Note</label>
+                  <textarea id="deploy-sealed-policy-note" placeholder="Paste a reminder, storage URI, or the encrypted security.policy content you will write to /run/secrets/ahanaflow/security.policy"></textarea>
+                  <div class="field-hint">This helper references the sealed policy as a file. Keep the actual encrypted policy outside git.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="output-grid">
+            <div class="code-card">
+              <div class="code-toolbar">
+                <div class="code-meta">
+                  <div class="code-title">.env.production</div>
+                  <div class="code-subtitle">ready to save beside docker-compose.yml</div>
+                </div>
+                <div class="action-row">
+                  <button class="btn-copy" onclick="copyDeployOutput('deploy-env-output')">Copy</button>
+                  <button class="btn-copy" onclick="downloadDeployOutput('deploy-env-output', '.env.production')">Download</button>
+                </div>
+              </div>
+              <pre class="code-block" id="deploy-env-output"></pre>
+            </div>
+
+            <div class="code-card">
+              <div class="code-toolbar">
+                <div class="code-meta">
+                  <div class="code-title">Secret File Payloads</div>
+                  <div class="code-subtitle">split into files under deploy/secrets/ahanaflow</div>
+                </div>
+                <div class="action-row">
+                  <button class="btn-copy" onclick="copyDeployOutput('deploy-secrets-output')">Copy</button>
+                  <button class="btn-copy" onclick="downloadSecretFiles()">Download Files</button>
+                  <button class="btn-copy" onclick="downloadDeployOutput('deploy-secrets-output', 'ahanaflow-secrets.txt')">Download</button>
+                </div>
+              </div>
+              <pre class="code-block" id="deploy-secrets-output"></pre>
+            </div>
+
+            <div class="code-card">
+              <div class="code-toolbar">
+                <div class="code-meta">
+                  <div class="code-title">Kubernetes File-Based Secret Command</div>
+                  <div class="code-subtitle">uses --from-file so raw keys do not land in shell history</div>
+                </div>
+                <button class="btn-copy" onclick="copyDeployOutput('deploy-k8s-output')">Copy</button>
+              </div>
+              <pre class="code-block" id="deploy-k8s-output"></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script>
+const API = '';  // same-origin
+let TOKEN = sessionStorage.getItem('ahanaflow_admin_token') || '';
+let _customers = [], _apikeys = [];
+const DEPLOY_FILE_MAP = [
+  { key: 'stripeSecret', file: 'stripe_secret_key' },
+  { key: 'webhookSecret', file: 'stripe_webhook_secret' },
+  { key: 'signingKey', file: 'signing_key' },
+  { key: 'sealedPolicyKey', file: 'sealed_policy_key' },
+  { key: 'adminApiKey', file: 'admin_api_key' },
+  { key: 'serviceApiKey', file: 'service_api_key' },
+  { key: 'artifactSigningKey', file: 'pro_artifact_signing_key' },
+  { key: 'artifactMasterKey', file: 'pro_artifact_master_key' },
+  { key: 'smtpPass', file: 'smtp_pass' }
+];
+const DEPLOY_DEFAULTS = {
+  publicStripePublishableKey: 'pk_live_replace_in_public_runtime',
+  pricePro: 'price_replace_me',
+  priceTeam: 'price_replace_me',
+  priceEnterprise: 'price_replace_me',
+  successUrl: 'https://www.ahanaflow.com/#pricing',
+  cancelUrl: 'https://www.ahanaflow.com/#pricing',
+  signingKey: 'load_from_secret_manager_not_repo',
+  sealedPolicyPath: '/run/secrets/ahanaflow/security.policy',
+  sealedPolicyKey: 'load_from_secret_manager_not_repo',
+  adminApiKey: 'load_from_secret_manager_not_repo',
+  smtpHost: 'smtp.example.com',
+  smtpUser: 'service@example.com',
+  fromEmail: 'licenses@example.com',
+  artifactId: 'ahanaflow-pro-codec',
+  artifactVersion: '2026.04',
+  artifactUrl: 'https://api.ahanaflow.com/private/ahanaflow-pro-codec.aarm',
+  artifactSha: 'replace_with_private_artifact_digest',
+  artifactTtl: '900',
+  sealedPolicyNote: 'Write the encrypted security.policy file separately and mount it at /run/secrets/ahanaflow/security.policy.'
+};
+
+// ── Auth ──────────────────────────────────────────────────────────────────
+async function doLogin() {
+  const pw = document.getElementById('pw-input').value;
+  const err = document.getElementById('login-error');
+  err.style.display = 'none';
+  try {
+    const r = await fetch(`${API}/admin/login`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({password: pw})
+    });
+    if (!r.ok) { err.style.display = 'block'; return; }
+    const data = await r.json();
+    TOKEN = data.token;
+    sessionStorage.setItem('ahanaflow_admin_token', TOKEN);
+    showDashboard();
+  } catch(e) {
+    err.textContent = 'Connection error. Try again.';
+    err.style.display = 'block';
+  }
+}
+
+function doLogout() {
+  TOKEN = '';
+  sessionStorage.removeItem('ahanaflow_admin_token');
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('pw-input').value = '';
+}
+
+document.getElementById('pw-input').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+// ── Bootstrap ─────────────────────────────────────────────────────────────
+async function showDashboard() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'flex';
+  updateHeaderTime();
+  setInterval(updateHeaderTime, 30000);
+  await Promise.all([loadSummary(), loadCustomers(), loadApiKeys(), loadHealth()]);
+}
+
+function updateHeaderTime() {
+  document.getElementById('header-time').textContent = new Date().toLocaleTimeString();
+}
+
+// Auto-login if token exists
+if (TOKEN) showDashboard();
+
+// ── Navigation ────────────────────────────────────────────────────────────
+function showTab(name) {
+  ['overview','customers','apikeys','health','deploykit'].forEach(t => {
+    document.getElementById(`tab-${t}`).classList.toggle('active', t === name);
+    document.getElementById(`nav-${t}`).classList.toggle('active', t === name);
+  });
+}
+
+function getDeployInputs() {
+  return {
+    publicStripePublishableKey: document.getElementById('deploy-public-key').value.trim(),
+    fromEmail: document.getElementById('deploy-from-email').value.trim(),
+    pricePro: document.getElementById('deploy-price-pro').value.trim(),
+    priceTeam: document.getElementById('deploy-price-team').value.trim(),
+    priceEnterprise: document.getElementById('deploy-price-enterprise').value.trim(),
+    artifactTtl: document.getElementById('deploy-artifact-ttl').value.trim() || '900',
+    successUrl: document.getElementById('deploy-success-url').value.trim(),
+    cancelUrl: document.getElementById('deploy-cancel-url').value.trim(),
+    smtpHost: document.getElementById('deploy-smtp-host').value.trim(),
+    smtpUser: document.getElementById('deploy-smtp-user').value.trim(),
+    artifactId: document.getElementById('deploy-artifact-id').value.trim(),
+    artifactVersion: document.getElementById('deploy-artifact-version').value.trim(),
+    artifactUrl: document.getElementById('deploy-artifact-url').value.trim(),
+    artifactSha: document.getElementById('deploy-artifact-sha').value.trim(),
+    sealedPolicyPath: document.getElementById('deploy-sealed-policy-path').value.trim(),
+    stripeSecret: document.getElementById('deploy-stripe-secret').value,
+    webhookSecret: document.getElementById('deploy-webhook-secret').value,
+    signingKey: document.getElementById('deploy-signing-key').value,
+    sealedPolicyKey: document.getElementById('deploy-sealed-policy-key').value,
+    adminApiKey: document.getElementById('deploy-admin-key').value,
+    serviceApiKey: document.getElementById('deploy-service-key').value,
+    artifactSigningKey: document.getElementById('deploy-artifact-signing-key').value,
+    artifactMasterKey: document.getElementById('deploy-artifact-master-key').value,
+    smtpPass: document.getElementById('deploy-smtp-pass').value,
+    sealedPolicyNote: document.getElementById('deploy-sealed-policy-note').value.trim()
+  };
+}
+
+function buildEnvOutput(inputs) {
+  return [
+    'STRIPE_SECRET_KEY_FILE=/run/secrets/ahanaflow/stripe_secret_key',
+    'STRIPE_WEBHOOK_SECRET_FILE=/run/secrets/ahanaflow/stripe_webhook_secret',
+    `PUBLIC_STRIPE_PUBLISHABLE_KEY=${inputs.publicStripePublishableKey || 'pk_live_replace_in_public_runtime'}`,
+    `STRIPE_PRICE_PRO_MONTHLY=${inputs.pricePro || 'price_replace_me'}`,
+    `STRIPE_PRICE_TEAM_MONTHLY=${inputs.priceTeam || 'price_replace_me'}`,
+    `STRIPE_PRICE_ENTERPRISE_MONTHLY=${inputs.priceEnterprise || 'price_replace_me'}`,
+    `STRIPE_CHECKOUT_SUCCESS_URL=${inputs.successUrl || 'https://www.ahanaflow.com/#pricing'}`,
+    `STRIPE_CHECKOUT_CANCEL_URL=${inputs.cancelUrl || 'https://www.ahanaflow.com/#pricing'}`,
+    'AHANAFLOW_SIGNING_KEY_FILE=/run/secrets/ahanaflow/signing_key',
+    `AHANAFLOW_SEALED_POLICY_FILE=${inputs.sealedPolicyPath || '/run/secrets/ahanaflow/security.policy'}`,
+    'AHANAFLOW_SEALED_POLICY_KEY_FILE=/run/secrets/ahanaflow/sealed_policy_key',
+    'AHANAFLOW_ADMIN_API_KEY_FILE=/run/secrets/ahanaflow/admin_api_key',
+    'AHANAFLOW_SERVICE_API_KEY_FILE=/run/secrets/ahanaflow/service_api_key',
+    `AHANAFLOW_PRO_ARTIFACT_ID=${inputs.artifactId || 'ahanaflow-pro-codec'}`,
+    `AHANAFLOW_PRO_ARTIFACT_VERSION=${inputs.artifactVersion || '2026.04'}`,
+    `AHANAFLOW_PRO_ARTIFACT_URL=${inputs.artifactUrl || 'https://api.ahanaflow.com/private/ahanaflow-pro-codec.aarm'}`,
+    `AHANAFLOW_PRO_ARTIFACT_SHA256=${inputs.artifactSha || 'replace_with_private_artifact_digest'}`,
+    'AHANAFLOW_PRO_ARTIFACT_SIGNING_KEY_FILE=/run/secrets/ahanaflow/pro_artifact_signing_key',
+    'AHANAFLOW_PRO_ARTIFACT_MASTER_KEY_FILE=/run/secrets/ahanaflow/pro_artifact_master_key',
+    `AHANAFLOW_PRO_ARTIFACT_TTL_SECONDS=${inputs.artifactTtl || '900'}`,
+    `SMTP_HOST=${inputs.smtpHost || 'smtp.example.com'}`,
+    `SMTP_USER=${inputs.smtpUser || 'service@example.com'}`,
+    'SMTP_PASS_FILE=/run/secrets/ahanaflow/smtp_pass',
+    `FROM_EMAIL=${inputs.fromEmail || 'licenses@example.com'}`
+  ].join('\n');
+}
+
+function buildSecretPayloadOutput(inputs) {
+  const blocks = DEPLOY_FILE_MAP.map((item) => {
+    const value = String(inputs[item.key] || '').trim() || '<paste value here>';
+    return `### deploy/secrets/ahanaflow/${item.file}\n${value}`;
+  });
+  const policyNote = inputs.sealedPolicyNote || 'Write the encrypted security.policy file separately and mount it at /run/secrets/ahanaflow/security.policy.';
+  blocks.push(`### deploy/secrets/ahanaflow/security.policy\n${policyNote}`);
+  return blocks.join('\n\n');
+}
+
+function buildK8sOutput() {
+  return [
+    'mkdir -p deploy/secrets/ahanaflow',
+    '# Write the generated files into deploy/secrets/ahanaflow/',
+    'kubectl create secret generic ahanaflow-runtime \\\n+  --from-file=stripe_secret_key=deploy/secrets/ahanaflow/stripe_secret_key \\\n+  --from-file=stripe_webhook_secret=deploy/secrets/ahanaflow/stripe_webhook_secret \\\n+  --from-file=signing_key=deploy/secrets/ahanaflow/signing_key \\\n+  --from-file=sealed_policy_key=deploy/secrets/ahanaflow/sealed_policy_key \\\n+  --from-file=admin_api_key=deploy/secrets/ahanaflow/admin_api_key \\\n+  --from-file=service_api_key=deploy/secrets/ahanaflow/service_api_key \\\n+  --from-file=pro_artifact_signing_key=deploy/secrets/ahanaflow/pro_artifact_signing_key \\\n+  --from-file=pro_artifact_master_key=deploy/secrets/ahanaflow/pro_artifact_master_key \\\n+  --from-file=smtp_pass=deploy/secrets/ahanaflow/smtp_pass \\\n+  --from-file=security.policy=deploy/secrets/ahanaflow/security.policy \\\n+  --dry-run=client -o yaml | kubectl apply -f -'
+  ].join('\n');
+}
+
+function buildSecretFiles(inputs) {
+  const files = DEPLOY_FILE_MAP.map((item) => ({
+    filename: item.file,
+    content: String(inputs[item.key] || '').trim() || '<paste value here>'
+  }));
+  files.push({
+    filename: 'security.policy',
+    content: inputs.sealedPolicyNote || 'Write the encrypted security.policy file separately and mount it at /run/secrets/ahanaflow/security.policy.'
+  });
+  return files;
+}
+
+function renderDeployOutputs() {
+  const inputs = getDeployInputs();
+  document.getElementById('deploy-env-output').textContent = buildEnvOutput(inputs);
+  document.getElementById('deploy-secrets-output').textContent = buildSecretPayloadOutput(inputs);
+  document.getElementById('deploy-k8s-output').textContent = buildK8sOutput();
+}
+
+function loadDeployExample() {
+  document.getElementById('deploy-public-key').value = DEPLOY_DEFAULTS.publicStripePublishableKey;
+  document.getElementById('deploy-from-email').value = DEPLOY_DEFAULTS.fromEmail;
+  document.getElementById('deploy-price-pro').value = DEPLOY_DEFAULTS.pricePro;
+  document.getElementById('deploy-price-team').value = DEPLOY_DEFAULTS.priceTeam;
+  document.getElementById('deploy-price-enterprise').value = DEPLOY_DEFAULTS.priceEnterprise;
+  document.getElementById('deploy-artifact-ttl').value = DEPLOY_DEFAULTS.artifactTtl;
+  document.getElementById('deploy-success-url').value = DEPLOY_DEFAULTS.successUrl;
+  document.getElementById('deploy-cancel-url').value = DEPLOY_DEFAULTS.cancelUrl;
+  document.getElementById('deploy-smtp-host').value = DEPLOY_DEFAULTS.smtpHost;
+  document.getElementById('deploy-smtp-user').value = DEPLOY_DEFAULTS.smtpUser;
+  document.getElementById('deploy-artifact-id').value = DEPLOY_DEFAULTS.artifactId;
+  document.getElementById('deploy-artifact-version').value = DEPLOY_DEFAULTS.artifactVersion;
+  document.getElementById('deploy-artifact-url').value = DEPLOY_DEFAULTS.artifactUrl;
+  document.getElementById('deploy-artifact-sha').value = DEPLOY_DEFAULTS.artifactSha;
+  document.getElementById('deploy-sealed-policy-path').value = DEPLOY_DEFAULTS.sealedPolicyPath;
+  document.getElementById('deploy-signing-key').value = DEPLOY_DEFAULTS.signingKey;
+  document.getElementById('deploy-sealed-policy-key').value = DEPLOY_DEFAULTS.sealedPolicyKey;
+  document.getElementById('deploy-admin-key').value = DEPLOY_DEFAULTS.adminApiKey;
+  document.getElementById('deploy-sealed-policy-note').value = DEPLOY_DEFAULTS.sealedPolicyNote;
+  renderDeployOutputs();
+}
+
+async function copyDeployOutput(id) {
+  const text = document.getElementById(id).textContent;
+  if (!text) return;
+  await navigator.clipboard.writeText(text);
+}
+
+function downloadDeployOutput(id, filename) {
+  const text = document.getElementById(id).textContent;
+  const blob = new Blob([text], {type: 'text/plain'});
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+function downloadSecretFiles() {
+  const files = buildSecretFiles(getDeployInputs());
+  files.forEach((file, index) => {
+    window.setTimeout(() => {
+      const blob = new Blob([file.content], {type: 'text/plain'});
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = file.filename;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }, index * 120);
+  });
+}
+
+// ── API helpers ───────────────────────────────────────────────────────────
+async function apiFetch(path) {
+  const r = await fetch(`${API}${path}`, {headers: {'X-Admin-Token': TOKEN}});
+  if (r.status === 401) { doLogout(); return null; }
+  if (!r.ok) return null;
+  return r.json();
+}
+
+// ── Summary ───────────────────────────────────────────────────────────────
+async function loadSummary() {
+  const data = await apiFetch('/admin/summary');
+  if (!data) return;
+  document.getElementById('stat-total').textContent = data.total_customers;
+  document.getElementById('stat-active').textContent = data.active_subscriptions;
+  document.getElementById('stat-leads').textContent = data.db_leads != null ? data.db_leads : '–';
+  document.getElementById('stat-pro').textContent = data.plan_breakdown.pro || 0;
+  document.getElementById('stat-team').textContent = data.plan_breakdown.team || 0;
+  document.getElementById('stat-ent').textContent = data.plan_breakdown.enterprise || 0;
+  document.getElementById('stat-keys').textContent = data.total_api_keys_issued;
+}
+
+// ── Customers ─────────────────────────────────────────────────────────────
+async function loadCustomers() {
+  const data = await apiFetch('/admin/customers');
+  if (!data) return;
+  _customers = data.customers;
+  document.getElementById('customers-count').textContent = `(${data.total})`;
+  renderCustomers(_customers);
+  renderRecentCustomers(_customers.slice(0, 8));
+}
+
+function renderRecentCustomers(list) {
+  const tbody = document.getElementById('recent-customers-body');
+  if (!list.length) { tbody.innerHTML = '<tr><td colspan="4"><div class="empty-state">No customers yet.</div></td></tr>'; return; }
+  tbody.innerHTML = list.map(c => `
+    <tr>
+      <td class="email-cell">${esc(c.email)}</td>
+      <td>${planBadge(c.current_plan || c.plan)}</td>
+      <td>${statusBadge(c.subscription_id ? 'active' : ((c.tags||[]).includes('lead') ? 'lead' : 'inactive'))}</td>
+      <td class="id-cell">${esc(c.customer_id)}</td>
+    </tr>`).join('');
+}
+
+function renderCustomers(list) {
+  const tbody = document.getElementById('customers-body');
+  if (!list.length) { tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state">No customers found.</div></td></tr>'; return; }
+  tbody.innerHTML = list.map(c => `
+    <tr>
+      <td class="email-cell">${esc(c.email)}</td>
+      <td>${planBadge(c.current_plan || c.plan)}</td>
+      <td>${statusBadge(c.subscription_id ? 'active' : ((c.tags||[]).includes('lead') ? 'lead' : 'inactive'))}</td>
+      <td>${(c.api_keys || []).length} / ${c.max_api_keys || 0}</td>
+      <td class="id-cell">${esc(c.customer_id)}</td>
+      <td style="color:var(--muted)">${fmtDate(c.updated_at)}</td>
+    </tr>`).join('');
+}
+
+function filterCustomers() {
+  const q = document.getElementById('customers-search').value.toLowerCase();
+  renderCustomers(_customers.filter(c =>
+    (c.email||'').toLowerCase().includes(q) || (c.customer_id||'').toLowerCase().includes(q)
+  ));
+}
+
+// ── API Keys ──────────────────────────────────────────────────────────────
+async function loadApiKeys() {
+  const data = await apiFetch('/admin/api-keys');
+  if (!data) return;
+  _apikeys = data.api_keys;
+  document.getElementById('apikeys-count').textContent = `(${data.total})`;
+  renderApiKeys(_apikeys);
+}
+
+function renderApiKeys(list) {
+  const tbody = document.getElementById('apikeys-body');
+  if (!list.length) { tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state">No API keys issued yet.</div></td></tr>'; return; }
+  tbody.innerHTML = list.map(k => `
+    <tr>
+      <td class="email-cell">${esc(k.email)}</td>
+      <td>${planBadge(k.plan)}</td>
+      <td style="color:var(--muted)">${esc(k.label || '—')}</td>
+      <td class="id-cell">${esc(k.key_id || k.id || '—')}</td>
+      <td>${statusBadge(k.revoked ? 'revoked' : 'active')}</td>
+      <td style="color:var(--muted)">${fmtDate(k.created_at)}</td>
+    </tr>`).join('');
+}
+
+function filterApiKeys() {
+  const q = document.getElementById('apikeys-search').value.toLowerCase();
+  renderApiKeys(_apikeys.filter(k =>
+    (k.email||'').toLowerCase().includes(q) || (k.key_id||'').toLowerCase().includes(q)
+  ));
+}
+
+// ── Health ────────────────────────────────────────────────────────────────
+async function loadHealth() {
+  const data = await apiFetch('/admin/health');
+  if (!data) return;
+  const services = [
+    {name: 'Webhook Server', status: data.webhook_server},
+    {name: 'Universal State Server', status: data.universal_state_server},
+    {name: 'Vector State Server', status: data.vector_state_server},
+  ];
+  document.getElementById('health-grid').innerHTML = services.map(s => {
+    const ok = s.status === 'ok';
+    const dotClass = ok ? 'health-ok' : (s.status === 'unknown' ? 'health-unknown' : 'health-error');
+    return `
+      <div class="health-card">
+        <div class="health-service">${esc(s.name)}</div>
+        <div class="health-status">
+          <span class="health-dot ${dotClass}"></span>
+          ${ok ? '<span style="color:var(--success)">Operational</span>' : `<span style="color:var(--danger)">${esc(s.status)}</span>`}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── CSV Export ────────────────────────────────────────────────────────────
+function exportCSV(type) {
+  let rows, headers, filename;
+  if (type === 'customers') {
+    headers = ['email','plan','subscription_id','max_api_keys','customer_id','updated_at'];
+    rows = _customers.map(c => headers.map(h => `"${(c[h]||'').toString().replace(/"/g,'""')}"`).join(','));
+    filename = `ahanaflow_customers_${yyyymmdd()}.csv`;
+  } else {
+    headers = ['email','plan','label','key_id','revoked','created_at'];
+    rows = _apikeys.map(k => headers.map(h => `"${(k[h]||'').toString().replace(/"/g,'""')}"`).join(','));
+    filename = `ahanaflow_apikeys_${yyyymmdd()}.csv`;
+  }
+  const blob = new Blob([headers.join(',') + '\n' + rows.join('\n')], {type: 'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function planBadge(plan) {
+  const p = (plan||'free').toLowerCase();
+  if (p === 'pro') return '<span class="badge badge-pro">Pro</span>';
+  if (p === 'team') return '<span class="badge badge-team">Team</span>';
+  if (p === 'enterprise') return '<span class="badge badge-enterprise">Enterprise</span>';
+  return '<span class="badge badge-free">Free</span>';
+}
+function statusBadge(status) {
+  const s = (status||'').toLowerCase();
+  if (s === 'active') return '<span class="badge badge-active">Active</span>';
+  if (s === 'lead') return '<span class="badge badge-lead">Lead</span>';
+  if (s === 'canceled') return '<span class="badge badge-canceled">Canceled</span>';
+  if (s === 'past_due') return '<span class="badge badge-past_due">Past Due</span>';
+  if (s === 'revoked') return '<span class="badge badge-canceled">Revoked</span>';
+  return '<span class="badge badge-free">Inactive</span>';
+}
+function fmtDate(ts) {
+  if (!ts) return '—';
+  return new Date(ts * 1000).toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric', hour:'2-digit',minute:'2-digit'});
+}
+function yyyymmdd() {
+  const d = new Date();
+  return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+}
+
+loadDeployExample();
+</script>
+</body>
+</html>

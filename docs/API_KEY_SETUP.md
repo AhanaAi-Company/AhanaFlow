@@ -85,6 +85,18 @@ ahanaflow_live_5k8j2n9f1x6c4d8e7g3h2m1p9q7r4s6t8v2w5y1z3
 - Rotate keys annually or after team member departures
 - Use separate keys for dev/staging/production
 
+### Step 5: Retrieve Proprietary Artifacts Through The Backend
+
+Commercial customers should retrieve paid codec or dictionary artifacts through the
+backend portal flow, not from the public repo. The backend manifest now supports:
+
+- short-lived download grants
+- customer-specific leak-attribution fingerprints
+- per-customer PUZZLE-AUTH unlock keys for wrapped proprietary payloads
+
+This keeps proprietary payload keys off the client until the backend has validated
+the customer entitlement.
+
 ---
 
 ## Configuration Methods

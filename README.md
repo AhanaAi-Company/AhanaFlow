@@ -203,6 +203,8 @@ python -m backend.universal_server.cli serve
 
 For production, prefer `*_FILE` runtime secrets and a sealed policy file over plaintext env vars. The customer/admin surfaces now support `AHANAFLOW_ADMIN_API_KEY_FILE`, `AHANAFLOW_SERVICE_API_KEY_FILE`, `AHANAFLOW_SEALED_POLICY_KEY_FILE`, `STRIPE_SECRET_KEY_FILE`, `STRIPE_WEBHOOK_SECRET_FILE`, and `AHANAFLOW_SIGNING_KEY_FILE`.
 
+Paid proprietary artifacts should be distributed through the backend manifest flow, not from the public repository. The backend can issue customer-specific fingerprints, short-lived download grants, and per-customer PUZZLE-AUTH unlock keys once entitlement checks pass.
+
 **See [docs/API_KEY_SETUP.md](./docs/API_KEY_SETUP.md) for complete setup instructions.**
 
 ---

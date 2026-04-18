@@ -50,11 +50,13 @@ class ApiKeyRegistry:
                 "price_id": "",
                 "updated_at": 0,
                 "portal_access": {},
+                "artifact_issues": [],
                 "api_keys": [],
             },
         )
         record.setdefault("api_keys", [])
         record.setdefault("portal_access", {})
+        record.setdefault("artifact_issues", [])
         return record
 
     def upsert_entitlement(
@@ -174,6 +176,36 @@ class ApiKeyRegistry:
             }
             record["updated_at"] = int(time.time())
             self._save(payload)
+
+    def record_artifact_issue(
+        self,
+        customer_id: str,
+        *,
+        artifact_id: str,
+        artifact_version: str,
+        fingerprint: str,
+        grant_token: str,
+    ) -> dict[str, Any]:
+        with self._lock:
+            payload = self._load()
+            record = self._customer_record(payload, customer_id)
+            entry = {
+                "artifact_id": artifact_id,
+                "artifact_version": artifact_version,
+                "fingerprint": fingerprint,
+                "grant_hash": hashlib.sha256(grant_token.encode("utf-8")).hexdigest().lower(),
+                "issued_at": int(time.time()),
+            }
+            record.setdefault("artifact_issues", []).append(entry)
+            record["updated_at"] = int(time.time())
+            self._save(payload)
+            return entry
+
+    def list_artifact_issues(self, customer_id: str) -> list[dict[str, Any]]:
+        record = self.get_customer(customer_id)
+        if not record:
+            return []
+        return list(record.get("artifact_issues", []))
 
     def verify_access_code(self, customer_id: str, code: str) -> bool:
         with self._lock:

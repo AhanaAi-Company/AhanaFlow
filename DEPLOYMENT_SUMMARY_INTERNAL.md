@@ -230,6 +230,7 @@ python -c "from ahana_codec import compress; print('✓ Pro codec loaded')"
 - Download requires valid API key
 - Wheels are per-platform (linux_x86_64, macosx_arm64, win_amd64)
 - License check on import → API key validation
+- Backend manifest flow can issue short-lived download grants, customer-specific fingerprints, and per-customer PUZZLE-AUTH unlock keys for paid artifacts
 
 ---
 

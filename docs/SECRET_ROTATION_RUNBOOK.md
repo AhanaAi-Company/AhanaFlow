@@ -16,6 +16,8 @@ Rotate these outside the repository and update your runtime secret store:
 - `AHANAFLOW_ADMIN_API_KEY`
 - `AHANAFLOW_SERVICE_API_KEY`
 - `AHANAFLOW_SEALED_POLICY_KEY`
+- `AHANAFLOW_PRO_ARTIFACT_SIGNING_KEY`
+- `AHANAFLOW_PRO_ARTIFACT_MASTER_KEY`
 - `SMTP_PASS`
 
 ## Generate New Signing Keys
@@ -37,6 +39,23 @@ Mount them at runtime with:
 
 - `AHANAFLOW_ADMIN_API_KEY_FILE`
 - `AHANAFLOW_SERVICE_API_KEY_FILE`
+
+## Rotate Proprietary Artifact Keys
+
+Generate two independent 256-bit secrets:
+
+```bash
+openssl rand -hex 32 > /secure/path/pro_artifact_signing_key
+openssl rand -hex 32 > /secure/path/pro_artifact_master_key
+```
+
+Mount them as:
+
+- `AHANAFLOW_PRO_ARTIFACT_SIGNING_KEY_FILE`
+- `AHANAFLOW_PRO_ARTIFACT_MASTER_KEY_FILE`
+
+The signing key protects short-lived download grants. The master key derives
+customer-specific fingerprints and PUZZLE-AUTH unlock keys.
 
 ## Rotate Sealed Policy Key
 
@@ -79,6 +98,8 @@ Recommended mount targets:
 - `/run/secrets/ahanaflow/sealed_policy_key`
 - `/run/secrets/ahanaflow/security.policy`
 - `/run/secrets/ahanaflow/smtp_pass`
+- `/run/secrets/ahanaflow/pro_artifact_signing_key`
+- `/run/secrets/ahanaflow/pro_artifact_master_key`
 
 Do not write these secrets into `.env.production`, image layers, or the public repository.
 

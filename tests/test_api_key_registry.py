@@ -9,6 +9,11 @@ from cryptography.hazmat.primitives.serialization import Encoding, NoEncryption,
 
 from backend.stripe_webhook.api_key_registry import ApiKeyRegistry
 from backend.stripe_webhook.license_keys import generate_license_key
+from backend.stripe_webhook.proprietary_artifacts import (
+    build_artifact_manifest,
+    decode_download_grant,
+    load_proprietary_artifact_config,
+)
 from backend.universal_server.security import (
     AuthenticationError,
     SecurityConfig,
@@ -132,3 +137,56 @@ def test_security_middleware_loads_sealed_policy(tmp_path):
     assert security.config.command_whitelist == {"PING", "GET"}
     assert security.config.rate_limit_per_ip == 25
     assert security.config.rate_limit_per_key == 50
+
+
+def test_registry_records_artifact_issues(tmp_path):
+    registry = ApiKeyRegistry(tmp_path / "registry.json")
+    registry.upsert_entitlement(
+        customer_id="cus_artifact",
+        email="owner@example.com",
+        tier="pro",
+        plan="pro",
+        max_api_keys=1,
+    )
+
+    issue = registry.record_artifact_issue(
+        "cus_artifact",
+        artifact_id="ahanaflow-pro-codec",
+        artifact_version="2026.04",
+        fingerprint="abc123fingerprint",
+        grant_token="signed-token",
+    )
+
+    issues = registry.list_artifact_issues("cus_artifact")
+    assert issue["artifact_id"] == "ahanaflow-pro-codec"
+    assert issues[0]["fingerprint"] == "abc123fingerprint"
+    assert issues[0]["grant_hash"] != "signed-token"
+
+
+def test_proprietary_artifact_manifest_round_trip(monkeypatch):
+    monkeypatch.setenv("AHANAFLOW_PRO_ARTIFACT_ID", "ahanaflow-pro-codec")
+    monkeypatch.setenv("AHANAFLOW_PRO_ARTIFACT_VERSION", "2026.04")
+    monkeypatch.setenv("AHANAFLOW_PRO_ARTIFACT_URL", "https://private.example/artifact.aarm")
+    monkeypatch.setenv("AHANAFLOW_PRO_ARTIFACT_SHA256", "a" * 64)
+    monkeypatch.setenv("AHANAFLOW_PRO_ARTIFACT_SIGNING_KEY", "signing-secret")
+    monkeypatch.setenv("AHANAFLOW_PRO_ARTIFACT_MASTER_KEY", "master-secret")
+    monkeypatch.setenv("AHANAFLOW_PRO_ARTIFACT_TTL_SECONDS", "600")
+
+    config = load_proprietary_artifact_config()
+    assert config is not None
+
+    manifest = build_artifact_manifest(
+        config,
+        customer_id="cus_123",
+        email="buyer@example.com",
+        tier="pro",
+        plan="pro",
+    )
+    grant = decode_download_grant(config, manifest["download_grant"])
+
+    assert manifest["distribution_mode"] == "backend-signed-manifest"
+    assert manifest["container_format"] == "puzzle_auth_aarm"
+    assert manifest["fingerprint"]
+    assert manifest["unlock_key"]
+    assert grant["customer_id"] == "cus_123"
+    assert grant["fingerprint"] == manifest["fingerprint"]

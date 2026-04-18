@@ -56,6 +56,7 @@ from backend.common import read_secret, secret_is_configured
 from backend.stripe_webhook.api_key_registry import ApiKeyRegistry
 from backend.stripe_webhook.email_templates import license_issued, license_renewed, portal_access_code
 from backend.stripe_webhook.license_keys import generate_license_key
+from backend.stripe_webhook.proprietary_artifacts import build_artifact_manifest, load_proprietary_artifact_config
 from backend.customer_db import CustomerDatabaseEngine, Customer
 
 # ---------------------------------------------------------------------------
@@ -232,6 +233,10 @@ class ApiKeyCreateRequest(BaseModel):
 class ApiKeyRevokeRequest(BaseModel):
     email: str = Field(min_length=3)
     keyId: str = Field(min_length=3)
+
+
+class ArtifactManifestRequest(BaseModel):
+    email: str = Field(min_length=3)
 
 
 class PortalAccessCodeRequest(BaseModel):
@@ -470,6 +475,29 @@ def _portal_payload(customer: dict[str, Any], subscription: Any, *, license_key:
         "max_api_keys": int(record.get("max_api_keys", 1) or 1),
         "api_keys": API_KEY_REGISTRY.list_api_keys(customer["id"]),
     }
+
+
+def _artifact_manifest_for_customer(customer: dict[str, Any], record: dict[str, Any]) -> dict[str, Any]:
+    config = load_proprietary_artifact_config()
+    if config is None:
+        raise HTTPException(status_code=503, detail="Proprietary artifact distribution is not configured")
+
+    email = str(customer.get("email", "") or "")
+    manifest = build_artifact_manifest(
+        config,
+        customer_id=customer["id"],
+        email=email,
+        tier=str(record.get("tier", "pro")),
+        plan=str(record.get("plan", "pro")),
+    )
+    API_KEY_REGISTRY.record_artifact_issue(
+        customer["id"],
+        artifact_id=manifest["artifact_id"],
+        artifact_version=manifest["artifact_version"],
+        fingerprint=manifest["fingerprint"],
+        grant_token=manifest["download_grant"],
+    )
+    return manifest
 
 
 def _issue_portal_access_code(customer_id: str, email: str) -> None:
@@ -922,6 +950,22 @@ async def revoke_api_key(request: ApiKeyRevokeRequest, x_portal_token: str | Non
     }
 
 
+@app.post("/artifacts/manifest")
+async def proprietary_artifact_manifest(request: ArtifactManifestRequest, x_portal_token: str | None = Header(None)):
+    _require_portal_session(x_portal_token, request.email)
+    customer, sub = _resolve_customer_and_subscription(request.email)
+    record = _sync_entitlement(customer["id"], str(customer.get("email", "") or ""), sub)
+    return {
+        "ok": True,
+        "customer_id": customer["id"],
+        "email": str(customer.get("email", "") or ""),
+        "tier": str(record.get("tier", "pro")),
+        "plan": str(record.get("plan", "pro")),
+        "artifact": _artifact_manifest_for_customer(customer, record),
+        "artifact_issues": API_KEY_REGISTRY.list_artifact_issues(customer["id"]),
+    }
+
+
 # ---------------------------------------------------------------------------
 # Admin dashboard — password-protected operator UI
 # ---------------------------------------------------------------------------
@@ -973,6 +1017,15 @@ async def admin_dashboard():
     html_path = _Path(__file__).parent.parent.parent / "website" / "admin.html"
     if not html_path.exists():
         raise HTTPException(status_code=503, detail="Admin dashboard not found")
+    return HTMLResponse(content=html_path.read_text(encoding="utf-8"))
+
+
+@app.get("/deploy-helper", response_class=HTMLResponse)
+async def deploy_helper_page():
+    """Serve the public deployment helper page."""
+    html_path = _Path(__file__).parent.parent.parent / "website" / "deploy-helper.html"
+    if not html_path.exists():
+        raise HTTPException(status_code=503, detail="Deploy helper not found")
     return HTMLResponse(content=html_path.read_text(encoding="utf-8"))
 
 

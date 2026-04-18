@@ -504,6 +504,8 @@ All supported secret inputs now also accept mounted file variants. For example:
 - `STRIPE_WEBHOOK_SECRET_FILE`
 - `AHANAFLOW_SIGNING_KEY_FILE`
 - `SMTP_PASS_FILE`
+- `AHANAFLOW_PRO_ARTIFACT_SIGNING_KEY_FILE`
+- `AHANAFLOW_PRO_ARTIFACT_MASTER_KEY_FILE`
 
 **Lock down the customer admin API:**
 
@@ -513,6 +515,36 @@ uvicorn backend.customer_db.api:app --host 127.0.0.1 --port 9636
 ```
 
 Every admin API request must include `X-Admin-API-Key` or `Authorization: Bearer <key>`.
+
+**Distribute proprietary paid artifacts from the backend only:**
+
+Configure the webhook/backend service with a private artifact URL, digest, and two
+secrets: one for signed download grants and one for per-customer fingerprint/unlock-key
+derivation.
+
+Required runtime settings:
+
+- `AHANAFLOW_PRO_ARTIFACT_ID`
+- `AHANAFLOW_PRO_ARTIFACT_VERSION`
+- `AHANAFLOW_PRO_ARTIFACT_URL`
+- `AHANAFLOW_PRO_ARTIFACT_SHA256`
+- `AHANAFLOW_PRO_ARTIFACT_SIGNING_KEY_FILE`
+- `AHANAFLOW_PRO_ARTIFACT_MASTER_KEY_FILE`
+
+Customers should obtain the manifest via the portal-backed `/artifacts/manifest` route
+after entitlement checks pass.
+
+For operators using the built-in admin dashboard, the `/admin` UI now includes a
+`Deploy Kit` tab that lets you paste the runtime keys locally in the browser and
+generate three outputs without posting the secrets back to the server:
+
+- `.env.production` with `*_FILE` references
+- secret-file payloads for `deploy/secrets/ahanaflow/`
+- a `kubectl create secret generic ... --from-file=...` command block
+
+If you want the same formatter without the admin login, use the public
+`/deploy-helper` page. It exposes only the local formatting helper, not the
+customer/admin data views.
 
 See [docs/SECRET_ROTATION_RUNBOOK.md](./SECRET_ROTATION_RUNBOOK.md) for the full rotation and runtime-mount procedure.
 

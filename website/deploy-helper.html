@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AhanaFlow Deploy Helper</title>
+<style>
+  :root {
+    --bg: #f4efe5;
+    --panel: #fffaf2;
+    --panel-2: #fffdf8;
+    --ink: #17263e;
+    --muted: #68788f;
+    --line: rgba(23, 38, 62, 0.14);
+    --brand: #d85b45;
+    --brand-2: #a93b31;
+    --teal: #157d78;
+    --shadow: 0 24px 48px rgba(23, 38, 62, 0.08);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Space Grotesk", "Avenir Next", "Segoe UI", sans-serif;
+    color: var(--ink);
+    background:
+      radial-gradient(circle at top left, rgba(216, 91, 69, 0.12), transparent 30%),
+      radial-gradient(circle at top right, rgba(21, 125, 120, 0.10), transparent 28%),
+      linear-gradient(180deg, #f8f3eb 0%, #f1ebdf 100%);
+    min-height: 100vh;
+  }
+  .shell { width: min(1180px, calc(100% - 40px)); margin: 0 auto; }
+  .hero { padding: 44px 0 20px; }
+  .hero-card {
+    padding: 28px;
+    border: 1px solid rgba(255,255,255,0.8);
+    border-radius: 26px;
+    background: rgba(255, 250, 242, 0.88);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+  .eyebrow {
+    margin: 0 0 12px;
+    color: var(--brand-2);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(2.4rem, 5vw, 4.6rem);
+    line-height: 0.96;
+    letter-spacing: -0.05em;
+  }
+  .hero-card p {
+    margin: 18px 0 0;
+    max-width: 72ch;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+  .utility-strip {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 22px;
+  }
+  .utility-item {
+    padding: 10px 14px;
+    border-radius: 999px;
+    background: rgba(23, 38, 62, 0.06);
+    color: var(--ink);
+    font-size: 12px;
+  }
+  .section { padding: 24px 0 80px; }
+  .grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 18px; }
+  .stack { display: grid; gap: 18px; }
+  .panel {
+    background: rgba(255, 253, 248, 0.9);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 12px 24px rgba(23, 38, 62, 0.05);
+  }
+  .panel h2, .panel h3 { margin: 0 0 8px; }
+  .panel-copy { margin: 0 0 14px; color: var(--muted); font-size: 13px; line-height: 1.65; }
+  .callout {
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: rgba(21, 125, 120, 0.08);
+    border: 1px solid rgba(21, 125, 120, 0.18);
+    color: var(--ink);
+    font-size: 13px;
+    line-height: 1.7;
+    margin-bottom: 18px;
+  }
+  .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .field { display: grid; gap: 6px; }
+  .field-wide { grid-column: 1 / -1; }
+  .field label {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .field input, .field textarea {
+    width: 100%;
+    padding: 11px 12px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: var(--panel-2);
+    color: var(--ink);
+    font: inherit;
+    outline: none;
+  }
+  .field textarea {
+    min-height: 112px;
+    resize: vertical;
+    font-family: "IBM Plex Mono", Consolas, monospace;
+    font-size: 12px;
+  }
+  .field input:focus, .field textarea:focus { border-color: var(--teal); }
+  .hint { color: var(--muted); font-size: 11px; }
+  .action-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .btn {
+    padding: 11px 15px;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: var(--panel-2);
+    color: var(--ink);
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .btn:hover { border-color: var(--teal); color: var(--teal); }
+  .btn-primary {
+    background: var(--brand);
+    border-color: var(--brand);
+    color: #fff8f4;
+  }
+  .btn-primary:hover { background: var(--brand-2); border-color: var(--brand-2); color: #fff8f4; }
+  .output-grid { display: grid; gap: 16px; }
+  .code-card { background: rgba(255, 253, 248, 0.94); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; }
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--line);
+    background: rgba(23, 38, 62, 0.04);
+  }
+  .meta { display: grid; gap: 2px; }
+  .title { font-size: 13px; font-weight: 700; }
+  .subtitle { color: var(--muted); font-size: 11px; }
+  pre {
+    margin: 0;
+    padding: 16px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: "IBM Plex Mono", Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.6;
+  }
+  .footer-note {
+    padding: 18px 0 40px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.7;
+  }
+  @media (max-width: 900px) {
+    .grid, .form-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+  <div class="shell hero">
+    <div class="hero-card">
+      <div class="eyebrow">Public Deploy Helper</div>
+      <h1>Turn raw keys into deploy-ready files without editing by hand.</h1>
+      <p>Paste the runtime values once and generate a correct `.env.production`, per-secret files, and a file-based Kubernetes secret command. The key material stays in this browser session and is never posted to the backend from this page.</p>
+      <div class="utility-strip">
+        <div class="utility-item">Same runtime names as `.env.production.example`</div>
+        <div class="utility-item">File-based secret mounts only</div>
+        <div class="utility-item">One-click secret file downloads</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="shell section">
+    <div class="callout">
+      Use this page outside the admin login when you just need deployment formatting. For operator dashboards and customer data, use the protected `/admin` surface instead.
+    </div>
+
+    <div class="grid">
+      <div class="stack">
+        <div class="panel">
+          <h2>Runtime Inputs</h2>
+          <p class="panel-copy">Public config and artifact metadata live in the env file. Secrets are emitted separately as file contents.</p>
+          <div class="form-grid">
+            <div class="field"><label for="deploy-public-key">PUBLIC_STRIPE_PUBLISHABLE_KEY</label><input id="deploy-public-key" type="text" placeholder="pk_live_..."></div>
+            <div class="field"><label for="deploy-from-email">FROM_EMAIL</label><input id="deploy-from-email" type="email" placeholder="licenses@example.com"></div>
+            <div class="field"><label for="deploy-price-pro">STRIPE_PRICE_PRO_MONTHLY</label><input id="deploy-price-pro" type="text" placeholder="price_..."></div>
+            <div class="field"><label for="deploy-price-team">STRIPE_PRICE_TEAM_MONTHLY</label><input id="deploy-price-team" type="text" placeholder="price_..."></div>
+            <div class="field"><label for="deploy-price-enterprise">STRIPE_PRICE_ENTERPRISE_MONTHLY</label><input id="deploy-price-enterprise" type="text" placeholder="price_..."></div>
+            <div class="field"><label for="deploy-artifact-ttl">AHANAFLOW_PRO_ARTIFACT_TTL_SECONDS</label><input id="deploy-artifact-ttl" type="number" min="60" step="60" placeholder="900"></div>
+            <div class="field field-wide"><label for="deploy-success-url">STRIPE_CHECKOUT_SUCCESS_URL</label><input id="deploy-success-url" type="url" placeholder="https://www.ahanaflow.com/#pricing"></div>
+            <div class="field field-wide"><label for="deploy-cancel-url">STRIPE_CHECKOUT_CANCEL_URL</label><input id="deploy-cancel-url" type="url" placeholder="https://www.ahanaflow.com/#pricing"></div>
+            <div class="field"><label for="deploy-smtp-host">SMTP_HOST</label><input id="deploy-smtp-host" type="text" placeholder="smtp.example.com"></div>
+            <div class="field"><label for="deploy-smtp-user">SMTP_USER</label><input id="deploy-smtp-user" type="text" placeholder="service@example.com"></div>
+            <div class="field"><label for="deploy-artifact-id">AHANAFLOW_PRO_ARTIFACT_ID</label><input id="deploy-artifact-id" type="text" placeholder="ahanaflow-pro-codec"></div>
+            <div class="field"><label for="deploy-artifact-version">AHANAFLOW_PRO_ARTIFACT_VERSION</label><input id="deploy-artifact-version" type="text" placeholder="2026.04"></div>
+            <div class="field field-wide"><label for="deploy-artifact-url">AHANAFLOW_PRO_ARTIFACT_URL</label><input id="deploy-artifact-url" type="url" placeholder="https://api.ahanaflow.com/private/ahanaflow-pro-codec.aarm"></div>
+            <div class="field field-wide"><label for="deploy-artifact-sha">AHANAFLOW_PRO_ARTIFACT_SHA256</label><input id="deploy-artifact-sha" type="text" placeholder="64-character sha256 digest"></div>
+            <div class="field field-wide"><label for="deploy-sealed-policy-path">AHANAFLOW_SEALED_POLICY_FILE</label><input id="deploy-sealed-policy-path" type="text" value="/run/secrets/ahanaflow/security.policy"></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>Secret Inputs</h3>
+          <p class="panel-copy">These are emitted as separate files under `deploy/secrets/ahanaflow/`.</p>
+          <div class="form-grid">
+            <div class="field"><label for="deploy-stripe-secret">STRIPE_SECRET_KEY</label><input id="deploy-stripe-secret" type="password" placeholder="sk_live_..."></div>
+            <div class="field"><label for="deploy-webhook-secret">STRIPE_WEBHOOK_SECRET</label><input id="deploy-webhook-secret" type="password" placeholder="whsec_..."></div>
+            <div class="field"><label for="deploy-signing-key">AHANAFLOW_SIGNING_KEY</label><textarea id="deploy-signing-key" placeholder="license signing private key"></textarea></div>
+            <div class="field"><label for="deploy-sealed-policy-key">AHANAFLOW_SEALED_POLICY_KEY</label><input id="deploy-sealed-policy-key" type="password" placeholder="fernet key"></div>
+            <div class="field"><label for="deploy-admin-key">AHANAFLOW_ADMIN_API_KEY</label><input id="deploy-admin-key" type="password" placeholder="hex admin api key"></div>
+            <div class="field"><label for="deploy-service-key">AHANAFLOW_SERVICE_API_KEY</label><input id="deploy-service-key" type="password" placeholder="hex service api key"></div>
+            <div class="field"><label for="deploy-artifact-signing-key">AHANAFLOW_PRO_ARTIFACT_SIGNING_KEY</label><input id="deploy-artifact-signing-key" type="password" placeholder="32-byte secret"></div>
+            <div class="field"><label for="deploy-artifact-master-key">AHANAFLOW_PRO_ARTIFACT_MASTER_KEY</label><input id="deploy-artifact-master-key" type="password" placeholder="32-byte secret"></div>
+            <div class="field"><label for="deploy-smtp-pass">SMTP_PASS</label><input id="deploy-smtp-pass" type="password" placeholder="smtp password"></div>
+            <div class="field field-wide">
+              <label for="deploy-sealed-policy-note">security.policy note or content</label>
+              <textarea id="deploy-sealed-policy-note" placeholder="Paste the encrypted sealed policy content or a reminder for the mounted file"></textarea>
+              <div class="hint">Keep the real encrypted policy file outside git and mount it at the path above.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="action-row">
+          <button class="btn" onclick="loadDeployExample()">Load Example Values</button>
+          <button class="btn btn-primary" onclick="renderDeployOutputs()">Generate Outputs</button>
+        </div>
+      </div>
+
+      <div class="output-grid">
+        <div class="code-card">
+          <div class="toolbar">
+            <div class="meta">
+              <div class="title">.env.production</div>
+              <div class="subtitle">references only the mounted secret files</div>
+            </div>
+            <div class="action-row">
+              <button class="btn" onclick="copyDeployOutput('deploy-env-output')">Copy</button>
+              <button class="btn" onclick="downloadDeployOutput('deploy-env-output', '.env.production')">Download</button>
+            </div>
+          </div>
+          <pre id="deploy-env-output"></pre>
+        </div>
+
+        <div class="code-card">
+          <div class="toolbar">
+            <div class="meta">
+              <div class="title">Secret Files</div>
+              <div class="subtitle">download all files or inspect the combined preview</div>
+            </div>
+            <div class="action-row">
+              <button class="btn" onclick="copyDeployOutput('deploy-secrets-output')">Copy</button>
+              <button class="btn" onclick="downloadSecretFiles()">Download Files</button>
+              <button class="btn" onclick="downloadDeployOutput('deploy-secrets-output', 'ahanaflow-secrets.txt')">Download Preview</button>
+            </div>
+          </div>
+          <pre id="deploy-secrets-output"></pre>
+        </div>
+
+        <div class="code-card">
+          <div class="toolbar">
+            <div class="meta">
+              <div class="title">Kubernetes Secret Command</div>
+              <div class="subtitle">uses `--from-file` to keep raw values out of inline shell args</div>
+            </div>
+            <button class="btn" onclick="copyDeployOutput('deploy-k8s-output')">Copy</button>
+          </div>
+          <pre id="deploy-k8s-output"></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      After generating the files, place them under `deploy/secrets/ahanaflow/`, keep them out of git, and use the mounted file paths already documented in the deployment guide and secret rotation runbook.
+    </div>
+  </div>
+
+<script>
+const DEPLOY_FILE_MAP = [
+  { key: 'stripeSecret', file: 'stripe_secret_key' },
+  { key: 'webhookSecret', file: 'stripe_webhook_secret' },
+  { key: 'signingKey', file: 'signing_key' },
+  { key: 'sealedPolicyKey', file: 'sealed_policy_key' },
+  { key: 'adminApiKey', file: 'admin_api_key' },
+  { key: 'serviceApiKey', file: 'service_api_key' },
+  { key: 'artifactSigningKey', file: 'pro_artifact_signing_key' },
+  { key: 'artifactMasterKey', file: 'pro_artifact_master_key' },
+  { key: 'smtpPass', file: 'smtp_pass' }
+];
+
+const DEPLOY_DEFAULTS = {
+  publicStripePublishableKey: 'pk_live_replace_in_public_runtime',
+  pricePro: 'price_replace_me',
+  priceTeam: 'price_replace_me',
+  priceEnterprise: 'price_replace_me',
+  successUrl: 'https://www.ahanaflow.com/#pricing',
+  cancelUrl: 'https://www.ahanaflow.com/#pricing',
+  signingKey: 'load_from_secret_manager_not_repo',
+  sealedPolicyPath: '/run/secrets/ahanaflow/security.policy',
+  sealedPolicyKey: 'load_from_secret_manager_not_repo',
+  adminApiKey: 'load_from_secret_manager_not_repo',
+  smtpHost: 'smtp.example.com',
+  smtpUser: 'service@example.com',
+  fromEmail: 'licenses@example.com',
+  artifactId: 'ahanaflow-pro-codec',
+  artifactVersion: '2026.04',
+  artifactUrl: 'https://api.ahanaflow.com/private/ahanaflow-pro-codec.aarm',
+  artifactSha: 'replace_with_private_artifact_digest',
+  artifactTtl: '900',
+  sealedPolicyNote: 'Write the encrypted security.policy file separately and mount it at /run/secrets/ahanaflow/security.policy.'
+};
+
+function getDeployInputs() {
+  return {
+    publicStripePublishableKey: document.getElementById('deploy-public-key').value.trim(),
+    fromEmail: document.getElementById('deploy-from-email').value.trim(),
+    pricePro: document.getElementById('deploy-price-pro').value.trim(),
+    priceTeam: document.getElementById('deploy-price-team').value.trim(),
+    priceEnterprise: document.getElementById('deploy-price-enterprise').value.trim(),
+    artifactTtl: document.getElementById('deploy-artifact-ttl').value.trim() || '900',
+    successUrl: document.getElementById('deploy-success-url').value.trim(),
+    cancelUrl: document.getElementById('deploy-cancel-url').value.trim(),
+    smtpHost: document.getElementById('deploy-smtp-host').value.trim(),
+    smtpUser: document.getElementById('deploy-smtp-user').value.trim(),
+    artifactId: document.getElementById('deploy-artifact-id').value.trim(),
+    artifactVersion: document.getElementById('deploy-artifact-version').value.trim(),
+    artifactUrl: document.getElementById('deploy-artifact-url').value.trim(),
+    artifactSha: document.getElementById('deploy-artifact-sha').value.trim(),
+    sealedPolicyPath: document.getElementById('deploy-sealed-policy-path').value.trim(),
+    stripeSecret: document.getElementById('deploy-stripe-secret').value,
+    webhookSecret: document.getElementById('deploy-webhook-secret').value,
+    signingKey: document.getElementById('deploy-signing-key').value,
+    sealedPolicyKey: document.getElementById('deploy-sealed-policy-key').value,
+    adminApiKey: document.getElementById('deploy-admin-key').value,
+    serviceApiKey: document.getElementById('deploy-service-key').value,
+    artifactSigningKey: document.getElementById('deploy-artifact-signing-key').value,
+    artifactMasterKey: document.getElementById('deploy-artifact-master-key').value,
+    smtpPass: document.getElementById('deploy-smtp-pass').value,
+    sealedPolicyNote: document.getElementById('deploy-sealed-policy-note').value.trim()
+  };
+}
+
+function buildEnvOutput(inputs) {
+  return [
+    'STRIPE_SECRET_KEY_FILE=/run/secrets/ahanaflow/stripe_secret_key',
+    'STRIPE_WEBHOOK_SECRET_FILE=/run/secrets/ahanaflow/stripe_webhook_secret',
+    `PUBLIC_STRIPE_PUBLISHABLE_KEY=${inputs.publicStripePublishableKey || 'pk_live_replace_in_public_runtime'}`,
+    `STRIPE_PRICE_PRO_MONTHLY=${inputs.pricePro || 'price_replace_me'}`,
+    `STRIPE_PRICE_TEAM_MONTHLY=${inputs.priceTeam || 'price_replace_me'}`,
+    `STRIPE_PRICE_ENTERPRISE_MONTHLY=${inputs.priceEnterprise || 'price_replace_me'}`,
+    `STRIPE_CHECKOUT_SUCCESS_URL=${inputs.successUrl || 'https://www.ahanaflow.com/#pricing'}`,
+    `STRIPE_CHECKOUT_CANCEL_URL=${inputs.cancelUrl || 'https://www.ahanaflow.com/#pricing'}`,
+    'AHANAFLOW_SIGNING_KEY_FILE=/run/secrets/ahanaflow/signing_key',
+    `AHANAFLOW_SEALED_POLICY_FILE=${inputs.sealedPolicyPath || '/run/secrets/ahanaflow/security.policy'}`,
+    'AHANAFLOW_SEALED_POLICY_KEY_FILE=/run/secrets/ahanaflow/sealed_policy_key',
+    'AHANAFLOW_ADMIN_API_KEY_FILE=/run/secrets/ahanaflow/admin_api_key',
+    'AHANAFLOW_SERVICE_API_KEY_FILE=/run/secrets/ahanaflow/service_api_key',
+    `AHANAFLOW_PRO_ARTIFACT_ID=${inputs.artifactId || 'ahanaflow-pro-codec'}`,
+    `AHANAFLOW_PRO_ARTIFACT_VERSION=${inputs.artifactVersion || '2026.04'}`,
+    `AHANAFLOW_PRO_ARTIFACT_URL=${inputs.artifactUrl || 'https://api.ahanaflow.com/private/ahanaflow-pro-codec.aarm'}`,
+    `AHANAFLOW_PRO_ARTIFACT_SHA256=${inputs.artifactSha || 'replace_with_private_artifact_digest'}`,
+    'AHANAFLOW_PRO_ARTIFACT_SIGNING_KEY_FILE=/run/secrets/ahanaflow/pro_artifact_signing_key',
+    'AHANAFLOW_PRO_ARTIFACT_MASTER_KEY_FILE=/run/secrets/ahanaflow/pro_artifact_master_key',
+    `AHANAFLOW_PRO_ARTIFACT_TTL_SECONDS=${inputs.artifactTtl || '900'}`,
+    `SMTP_HOST=${inputs.smtpHost || 'smtp.example.com'}`,
+    `SMTP_USER=${inputs.smtpUser || 'service@example.com'}`,
+    'SMTP_PASS_FILE=/run/secrets/ahanaflow/smtp_pass',
+    `FROM_EMAIL=${inputs.fromEmail || 'licenses@example.com'}`
+  ].join('\n');
+}
+
+function buildSecretFiles(inputs) {
+  const files = DEPLOY_FILE_MAP.map((item) => ({
+    filename: item.file,
+    content: String(inputs[item.key] || '').trim() || '<paste value here>'
+  }));
+  files.push({
+    filename: 'security.policy',
+    content: inputs.sealedPolicyNote || 'Write the encrypted security.policy file separately and mount it at /run/secrets/ahanaflow/security.policy.'
+  });
+  return files;
+}
+
+function buildSecretPayloadOutput(inputs) {
+  return buildSecretFiles(inputs)
+    .map((file) => `### deploy/secrets/ahanaflow/${file.filename}\n${file.content}`)
+    .join('\n\n');
+}
+
+function buildK8sOutput() {
+  return [
+    'mkdir -p deploy/secrets/ahanaflow',
+    '# Write the generated files into deploy/secrets/ahanaflow/',
+    'kubectl create secret generic ahanaflow-runtime \\\n+  --from-file=stripe_secret_key=deploy/secrets/ahanaflow/stripe_secret_key \\\n+  --from-file=stripe_webhook_secret=deploy/secrets/ahanaflow/stripe_webhook_secret \\\n+  --from-file=signing_key=deploy/secrets/ahanaflow/signing_key \\\n+  --from-file=sealed_policy_key=deploy/secrets/ahanaflow/sealed_policy_key \\\n+  --from-file=admin_api_key=deploy/secrets/ahanaflow/admin_api_key \\\n+  --from-file=service_api_key=deploy/secrets/ahanaflow/service_api_key \\\n+  --from-file=pro_artifact_signing_key=deploy/secrets/ahanaflow/pro_artifact_signing_key \\\n+  --from-file=pro_artifact_master_key=deploy/secrets/ahanaflow/pro_artifact_master_key \\\n+  --from-file=smtp_pass=deploy/secrets/ahanaflow/smtp_pass \\\n+  --from-file=security.policy=deploy/secrets/ahanaflow/security.policy \\\n+  --dry-run=client -o yaml | kubectl apply -f -'
+  ].join('\n');
+}
+
+function renderDeployOutputs() {
+  const inputs = getDeployInputs();
+  document.getElementById('deploy-env-output').textContent = buildEnvOutput(inputs);
+  document.getElementById('deploy-secrets-output').textContent = buildSecretPayloadOutput(inputs);
+  document.getElementById('deploy-k8s-output').textContent = buildK8sOutput();
+}
+
+function loadDeployExample() {
+  document.getElementById('deploy-public-key').value = DEPLOY_DEFAULTS.publicStripePublishableKey;
+  document.getElementById('deploy-from-email').value = DEPLOY_DEFAULTS.fromEmail;
+  document.getElementById('deploy-price-pro').value = DEPLOY_DEFAULTS.pricePro;
+  document.getElementById('deploy-price-team').value = DEPLOY_DEFAULTS.priceTeam;
+  document.getElementById('deploy-price-enterprise').value = DEPLOY_DEFAULTS.priceEnterprise;
+  document.getElementById('deploy-artifact-ttl').value = DEPLOY_DEFAULTS.artifactTtl;
+  document.getElementById('deploy-success-url').value = DEPLOY_DEFAULTS.successUrl;
+  document.getElementById('deploy-cancel-url').value = DEPLOY_DEFAULTS.cancelUrl;
+  document.getElementById('deploy-smtp-host').value = DEPLOY_DEFAULTS.smtpHost;
+  document.getElementById('deploy-smtp-user').value = DEPLOY_DEFAULTS.smtpUser;
+  document.getElementById('deploy-artifact-id').value = DEPLOY_DEFAULTS.artifactId;
+  document.getElementById('deploy-artifact-version').value = DEPLOY_DEFAULTS.artifactVersion;
+  document.getElementById('deploy-artifact-url').value = DEPLOY_DEFAULTS.artifactUrl;
+  document.getElementById('deploy-artifact-sha').value = DEPLOY_DEFAULTS.artifactSha;
+  document.getElementById('deploy-sealed-policy-path').value = DEPLOY_DEFAULTS.sealedPolicyPath;
+  document.getElementById('deploy-signing-key').value = DEPLOY_DEFAULTS.signingKey;
+  document.getElementById('deploy-sealed-policy-key').value = DEPLOY_DEFAULTS.sealedPolicyKey;
+  document.getElementById('deploy-admin-key').value = DEPLOY_DEFAULTS.adminApiKey;
+  document.getElementById('deploy-sealed-policy-note').value = DEPLOY_DEFAULTS.sealedPolicyNote;
+  renderDeployOutputs();
+}
+
+async function copyDeployOutput(id) {
+  const text = document.getElementById(id).textContent;
+  if (!text) return;
+  await navigator.clipboard.writeText(text);
+}
+
+function downloadDeployOutput(id, filename) {
+  const text = document.getElementById(id).textContent;
+  const blob = new Blob([text], {type: 'text/plain'});
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+function downloadSecretFiles() {
+  const files = buildSecretFiles(getDeployInputs());
+  files.forEach((file, index) => {
+    window.setTimeout(() => {
+      const blob = new Blob([file.content], {type: 'text/plain'});
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = file.filename;
+      link.click();
+      URL.revokeObjectURL(link.href);
+    }, index * 120);
+  });
+}
+
+loadDeployExample();
+</script>
+</body>
+</html>
