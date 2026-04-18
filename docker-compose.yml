@@ -18,6 +18,10 @@ services:
       - "9644:9644"
     volumes:
       - single_node_data:/data
+      - ./deploy/secrets:/run/secrets/ahanaflow:ro
+    environment:
+      AHANAFLOW_SEALED_POLICY_FILE: /run/secrets/ahanaflow/security.policy
+      AHANAFLOW_SEALED_POLICY_KEY_FILE: /run/secrets/ahanaflow/sealed_policy_key
     restart: unless-stopped
 
   # Leader + follower pilot with VSS enabled on both nodes for bounded multi-node validation.
@@ -36,6 +40,10 @@ services:
       - "9100:9100"
     volumes:
       - ha_leader_data:/data
+      - ./deploy/secrets:/run/secrets/ahanaflow:ro
+    environment:
+      AHANAFLOW_SEALED_POLICY_FILE: /run/secrets/ahanaflow/security.policy
+      AHANAFLOW_SEALED_POLICY_KEY_FILE: /run/secrets/ahanaflow/sealed_policy_key
     restart: unless-stopped
 
   ha-follower:
@@ -52,6 +60,10 @@ services:
       - "9710:9100"
     volumes:
       - ha_follower_data:/data
+      - ./deploy/secrets:/run/secrets/ahanaflow:ro
+    environment:
+      AHANAFLOW_SEALED_POLICY_FILE: /run/secrets/ahanaflow/security.policy
+      AHANAFLOW_SEALED_POLICY_KEY_FILE: /run/secrets/ahanaflow/sealed_policy_key
     restart: unless-stopped
 
 volumes:

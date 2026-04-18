@@ -222,7 +222,7 @@ export AHANAFLOW_API_KEY=ahanaflow_live_ABC123...
 pip install ahanaflow-pro --extra-index-url https://api.ahanaflow.com/wheels/
 
 # Verify Pro compression
-python -c "from backend.ahana_codec import compress; print('✓ Pro codec loaded')"
+python -c "from ahana_codec import compress; print('✓ Pro codec loaded')"
 ```
 
 **Security:**

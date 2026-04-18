@@ -65,6 +65,7 @@ Run single-node:
 ```bash
 docker compose --profile single-node up -d
 ```
+Mount runtime secrets from `deploy/secrets/` or your secret manager. Do not commit live keys, signing material, or sealed policy files into the repo.
 Run the HA pilot for controlled multi-node pilots; see [High Availability](./docs/DEPLOYMENT_GUIDE.md#3-high-availability):
 ```bash
 docker compose --profile ha-pilot up -d
@@ -199,6 +200,8 @@ Or set via environment variable:
 export AHANAFLOW_API_KEY="your_api_key_here"
 python -m backend.universal_server.cli serve
 ```
+
+For production, prefer `*_FILE` runtime secrets and a sealed policy file over plaintext env vars. The customer/admin surfaces now support `AHANAFLOW_ADMIN_API_KEY_FILE`, `AHANAFLOW_SERVICE_API_KEY_FILE`, `AHANAFLOW_SEALED_POLICY_KEY_FILE`, `STRIPE_SECRET_KEY_FILE`, `STRIPE_WEBHOOK_SECRET_FILE`, and `AHANAFLOW_SIGNING_KEY_FILE`.
 
 **See [docs/API_KEY_SETUP.md](./docs/API_KEY_SETUP.md) for complete setup instructions.**
 

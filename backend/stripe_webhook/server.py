@@ -9,8 +9,8 @@ Deploy this on api.ahanazip.com/webhooks (separate from the AhanaFlow servers).
 Environment variables required (set in .env.production or systemd unit):
   STRIPE_SECRET_KEY          — sk_live_... (Stripe secret key)
   STRIPE_WEBHOOK_SECRET      — whsec_... (from Stripe dashboard → Webhooks)
-  AHANAFLOW_SIGNING_KEY      — Base64-encoded Ed25519 private key (PKCS8 DER)
-                               Generate with: python -m ahana_codec.keygen generate-keypair
+    AHANAFLOW_SIGNING_KEY      — Base64-encoded Ed25519 private key (PKCS8 DER)
+                                                             Generate with: python -m backend.stripe_webhook.license_keys generate-keypair
   SMTP_HOST                  — SMTP server hostname (e.g. smtp.sendgrid.net)
   SMTP_PORT                  — SMTP port (587 for TLS, 465 for SSL)
   SMTP_USER                  — SMTP username
@@ -52,9 +52,10 @@ from fastapi import FastAPI, Request, Response, HTTPException, Header, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from backend.ahana_codec.keygen import generate_license_key
+from backend.common import read_secret, secret_is_configured
 from backend.stripe_webhook.api_key_registry import ApiKeyRegistry
 from backend.stripe_webhook.email_templates import license_issued, license_renewed, portal_access_code
+from backend.stripe_webhook.license_keys import generate_license_key
 from backend.customer_db import CustomerDatabaseEngine, Customer
 
 # ---------------------------------------------------------------------------
@@ -69,9 +70,9 @@ log = logging.getLogger("ahanaflow.webhook")
 # ---------------------------------------------------------------------------
 # Config
 # ---------------------------------------------------------------------------
-STRIPE_SECRET_KEY = os.environ.get("STRIPE_SECRET_KEY", "")
-STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
-AHANAFLOW_SIGNING_KEY = os.environ.get("AHANAFLOW_SIGNING_KEY", "")
+STRIPE_SECRET_KEY = read_secret("STRIPE_SECRET_KEY")
+STRIPE_WEBHOOK_SECRET = read_secret("STRIPE_WEBHOOK_SECRET")
+AHANAFLOW_SIGNING_KEY = read_secret("AHANAFLOW_SIGNING_KEY")
 FROM_EMAIL = os.environ.get("FROM_EMAIL", "licenses@ahanazip.com")
 LICENSE_PORTAL_BASE_URL = os.environ.get("LICENSE_PORTAL_BASE_URL", "https://api.ahanazip.com")
 LICENSE_DAYS_MONTHLY = int(os.environ.get("LICENSE_DAYS_MONTHLY", 32))
@@ -117,9 +118,10 @@ customer_db: Optional[CustomerDatabaseEngine] = _get_customer_db()
 # Stored in UniversalStateServer so rotation requires no container restart.
 # Env var AHANAFLOW_SERVICE_API_KEY seeds the key on first boot.
 # ---------------------------------------------------------------------------
-_SERVICE_KEY_BOOT = os.environ.get("AHANAFLOW_SERVICE_API_KEY", "").strip()
+_SERVICE_KEY_BOOT = read_secret("AHANAFLOW_SERVICE_API_KEY")
 _SERVICE_KEY_USS_CURRENT = "service_key:current"
 _SERVICE_KEY_USS_PREV = "service_key:prev"
+_ALLOW_INSECURE_SERVICE_API = os.environ.get("AHANAFLOW_ALLOW_INSECURE_SERVICE_API", "").strip().lower() in {"1", "true", "yes"}
 
 
 def _uss_get(key: str) -> Optional[str]:
@@ -179,8 +181,9 @@ def _require_service_key(x_service_key: str | None = Header(None)) -> None:
     """FastAPI dependency — rejects requests missing a valid service key."""
     valid = _valid_service_keys()
     if not valid:
-        # No keys configured at all — open access (dev mode)
-        return
+        if _ALLOW_INSECURE_SERVICE_API:
+            return
+        raise HTTPException(status_code=503, detail="Service API key is not configured")
     if not x_service_key or x_service_key not in valid:
         raise HTTPException(status_code=401, detail="Invalid or missing service API key")
 

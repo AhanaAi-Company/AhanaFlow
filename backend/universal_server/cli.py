@@ -7,6 +7,8 @@ import signal
 import sys
 from pathlib import Path
 
+from backend.common import read_secret
+
 from .async_server import AsyncUniversalStateServer
 from .benchmark import run_benchmark
 from .server import UniversalStateServer
@@ -15,10 +17,22 @@ from backend.vector_server import VectorStateServerV2
 
 
 def _build_security_config(api_keys_file: str | None) -> SecurityConfig | None:
-    resolved = (api_keys_file or os.environ.get("AHANAFLOW_API_KEYS_FILE") or os.environ.get("AHANAFLOW_API_KEY_REGISTRY_PATH") or "").strip()
-    if not resolved:
+    resolved = (
+        api_keys_file
+        or os.environ.get("AHANAFLOW_API_KEYS_FILE")
+        or os.environ.get("AHANAFLOW_API_KEY_REGISTRY_PATH")
+        or ""
+    ).strip()
+    sealed_policy_file = os.environ.get("AHANAFLOW_SEALED_POLICY_FILE", "").strip()
+    sealed_policy_key = read_secret("AHANAFLOW_SEALED_POLICY_KEY")
+    if not resolved and not sealed_policy_file:
         return None
-    return SecurityConfig(api_keys_file=resolved, require_auth=True)
+    return SecurityConfig(
+        api_keys_file=resolved or None,
+        sealed_policy_file=sealed_policy_file or None,
+        sealed_policy_key=sealed_policy_key or None,
+        require_auth=True,
+    )
 
 
 def main() -> int:

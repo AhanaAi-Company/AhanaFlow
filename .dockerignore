@@ -1,6 +1,6 @@
 # Never bake private keys or secrets into the image
-ahana_codec/signing_keys/
-ahana_codec/__pycache__/
+backend/ahana_codec/
+backend/compression_service/
 
 # Dev artifacts
 **/__pycache__/

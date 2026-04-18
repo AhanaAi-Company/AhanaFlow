@@ -7,9 +7,15 @@ import pytest
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from cryptography.hazmat.primitives.serialization import Encoding, NoEncryption, PrivateFormat
 
-from backend.ahana_codec.keygen import generate_license_key
 from backend.stripe_webhook.api_key_registry import ApiKeyRegistry
-from backend.universal_server.security import AuthenticationError, SecurityConfig, SecurityMiddleware
+from backend.stripe_webhook.license_keys import generate_license_key
+from backend.universal_server.security import (
+    AuthenticationError,
+    SecurityConfig,
+    SecurityMiddleware,
+    hash_api_key,
+    seal_security_policy,
+)
 
 
 def test_registry_enforces_api_key_limit(tmp_path):
@@ -96,3 +102,33 @@ def test_registry_access_code_round_trip(tmp_path):
     assert registry.verify_access_code("cus_code", "999999") is False
     assert registry.verify_access_code("cus_code", "123456") is True
     assert registry.verify_access_code("cus_code", "123456") is False
+
+
+def test_security_middleware_loads_sealed_policy(tmp_path):
+    encryption_key = "RnBvN1ZQNWpqY0xHRUh0Q2xtUnJ3RUpzclN3dm9BblA4Q0ZsSE1sQmxwUT0="
+    issued_hash = hash_api_key("sealed-key-123")
+    sealed_path = tmp_path / "security.policy"
+    sealed_path.write_bytes(
+        seal_security_policy(
+            {
+                "api_key_hashes": [issued_hash],
+                "require_auth": True,
+                "command_whitelist": ["PING", "GET"],
+                "rate_limit_per_ip": 25,
+                "rate_limit_per_key": 50,
+            },
+            encryption_key,
+        )
+    )
+
+    security = SecurityMiddleware(
+        SecurityConfig(
+            sealed_policy_file=sealed_path,
+            sealed_policy_key=encryption_key,
+        )
+    )
+
+    security.authenticate("127.0.0.1", "sealed-key-123")
+    assert security.config.command_whitelist == {"PING", "GET"}
+    assert security.config.rate_limit_per_ip == 25
+    assert security.config.rate_limit_per_key == 50

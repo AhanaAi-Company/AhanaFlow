@@ -378,7 +378,7 @@ echo $AHANAFLOW_API_KEY
 # Check if Pro codec is installed
 python -c "
 try:
-    from backend.ahana_codec import compress
+  from ahana_codec import compress
     print('✓ Pro codec available')
 except ImportError:
     print('✗ Pro codec not installed')

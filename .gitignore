@@ -51,6 +51,8 @@ backend/compression_service/
 *.key
 *.pem
 *.crt
+*.policy
+deploy/secrets/
 
 # OS
 .DS_Store

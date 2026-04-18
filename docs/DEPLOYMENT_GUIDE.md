@@ -474,6 +474,48 @@ export AHANAFLOW_AUTH_TOKEN=$TOKEN
 echo '{"cmd":"PING","auth_token":"'$TOKEN'"}' | nc localhost 9633
 ```
 
+**Prefer a sealed server policy over plaintext auth files:**
+
+```bash
+# Generate a Fernet key once and store it in your secret manager
+python - <<'PY'
+from cryptography.fernet import Fernet
+print(Fernet.generate_key().decode())
+PY
+
+# Store encrypted auth policy outside source control
+export AHANAFLOW_SEALED_POLICY_FILE=/run/secrets/ahanaflow/security.policy
+export AHANAFLOW_SEALED_POLICY_KEY='<fernet-key-from-secret-manager>'
+
+# Start the server; the policy can contain hashed API keys, command whitelist,
+# and rate limits without leaving readable instructions on disk.
+python -m backend.universal_server.cli serve --port 9633
+```
+
+The sealed policy should live in a secret mount, not in the repository. Keep the
+encryption key in your platform secret manager or KMS.
+
+All supported secret inputs now also accept mounted file variants. For example:
+
+- `AHANAFLOW_SEALED_POLICY_KEY_FILE`
+- `AHANAFLOW_ADMIN_API_KEY_FILE`
+- `AHANAFLOW_SERVICE_API_KEY_FILE`
+- `STRIPE_SECRET_KEY_FILE`
+- `STRIPE_WEBHOOK_SECRET_FILE`
+- `AHANAFLOW_SIGNING_KEY_FILE`
+- `SMTP_PASS_FILE`
+
+**Lock down the customer admin API:**
+
+```bash
+export AHANAFLOW_ADMIN_API_KEY=$(openssl rand -hex 32)
+uvicorn backend.customer_db.api:app --host 127.0.0.1 --port 9636
+```
+
+Every admin API request must include `X-Admin-API-Key` or `Authorization: Bearer <key>`.
+
+See [docs/SECRET_ROTATION_RUNBOOK.md](./SECRET_ROTATION_RUNBOOK.md) for the full rotation and runtime-mount procedure.
+
 **TLS Encryption (Coming in v1.1):**
 
 ```bash
@@ -488,6 +530,7 @@ python -m backend.universal_server.cli serve --tls-cert cert.pem --tls-key key.p
 - Run on private network (10.x.x.x, 172.16.x.x, 192.168.x.x)
 - Use firewall rules to restrict access
 - Only expose via reverse proxy (nginx) with authentication
+- Never store live `.env.production`, signing keys, or sealed policy files inside the deploy package or public repo
 
 ### 5. Resource Limits
 

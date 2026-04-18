@@ -1,12 +1,14 @@
-"""
-Customer Database Admin API — FastAPI endpoints for customer queries
-"""
+"""Customer Database Admin API — authenticated endpoints for customer queries."""
 
+from __future__ import annotations
+
+import hmac
 import os
-from typing import Optional
-from fastapi import FastAPI, HTTPException, Header
+
+from fastapi import Depends, FastAPI, Header, HTTPException
 from pydantic import BaseModel, Field
 
+from backend.common import read_secret
 from backend.customer_db import CustomerDatabaseEngine, Customer, SupportNote
 
 
@@ -20,6 +22,42 @@ app = FastAPI(
 CUSTOMER_DB_HOST = os.environ.get("CUSTOMER_DB_HOST", "127.0.0.1")
 CUSTOMER_DB_PORT = int(os.environ.get("CUSTOMER_DB_PORT", "9635"))
 db = CustomerDatabaseEngine(host=CUSTOMER_DB_HOST, port=CUSTOMER_DB_PORT)
+
+
+def _extract_bearer_token(authorization: str | None) -> str | None:
+    if not authorization:
+        return None
+    scheme, _, token = authorization.partition(" ")
+    if scheme.lower() != "bearer" or not token.strip():
+        return None
+    return token.strip()
+
+
+def _valid_admin_keys() -> list[str]:
+    keys = []
+    for env_name in ("AHANAFLOW_ADMIN_API_KEY", "AHANAFLOW_ADMIN_API_KEY_PREV"):
+        value = read_secret(env_name)
+        if value:
+            keys.append(value)
+    return keys
+
+
+def _require_admin_key(
+    x_admin_api_key: str | None = Header(None),
+    authorization: str | None = Header(None),
+) -> None:
+    configured_keys = _valid_admin_keys()
+    if not configured_keys:
+        if os.environ.get("AHANAFLOW_ALLOW_INSECURE_ADMIN_API", "").strip().lower() in {"1", "true", "yes"}:
+            return
+        raise HTTPException(status_code=503, detail="Admin API key is not configured")
+
+    presented_key = x_admin_api_key or _extract_bearer_token(authorization)
+    if not presented_key:
+        raise HTTPException(status_code=401, detail="Missing admin API key")
+
+    if not any(hmac.compare_digest(presented_key, candidate) for candidate in configured_keys):
+        raise HTTPException(status_code=401, detail="Invalid admin API key")
 
 
 # ── Request Models ──────────────────────────────────────────────────────────
@@ -58,7 +96,7 @@ async def health():
 # ── Customer Queries ────────────────────────────────────────────────────────
 
 @app.get("/customers/{customer_id}")
-async def get_customer(customer_id: str):
+async def get_customer(customer_id: str, _auth: None = Depends(_require_admin_key)):
     """Get customer by ID"""
     db.connect()
     customer = db.get_customer(customer_id)
@@ -68,7 +106,7 @@ async def get_customer(customer_id: str):
 
 
 @app.get("/customers/email/{email}")
-async def get_customer_by_email(email: str):
+async def get_customer_by_email(email: str, _auth: None = Depends(_require_admin_key)):
     """Get customer by email address"""
     db.connect()
     customer = db.get_customer_by_email(email)
@@ -78,7 +116,7 @@ async def get_customer_by_email(email: str):
 
 
 @app.get("/customers/{customer_id}/usage")
-async def get_customer_usage(customer_id: str):
+async def get_customer_usage(customer_id: str, _auth: None = Depends(_require_admin_key)):
     """Get customer usage statistics"""
     db.connect()
     customer = db.get_customer(customer_id)
@@ -97,7 +135,7 @@ async def get_customer_usage(customer_id: str):
 # ── Support Notes ───────────────────────────────────────────────────────────
 
 @app.post("/support/notes")
-async def create_support_note(request: CreateSupportNoteRequest):
+async def create_support_note(request: CreateSupportNoteRequest, _auth: None = Depends(_require_admin_key)):
     """Add a support note to customer record"""
     db.connect()
     note = db.add_support_note(
@@ -112,7 +150,7 @@ async def create_support_note(request: CreateSupportNoteRequest):
 
 
 @app.get("/support/notes/{customer_id}/{note_id}")
-async def get_support_note(customer_id: str, note_id: str):
+async def get_support_note(customer_id: str, note_id: str, _auth: None = Depends(_require_admin_key)):
     """Get a support note"""
     db.connect()
     note = db.get_support_note(customer_id, note_id)
@@ -127,6 +165,7 @@ async def resolve_support_note(
     note_id: str,
     resolution: str,
     resolved_by: str = "api",
+    _auth: None = Depends(_require_admin_key),
 ):
     """Mark a support note as resolved"""
     db.connect()
@@ -137,7 +176,7 @@ async def resolve_support_note(
 # ── Marketing ───────────────────────────────────────────────────────────────
 
 @app.post("/marketing/tags")
-async def add_customer_tag(request: AddTagRequest):
+async def add_customer_tag(request: AddTagRequest, _auth: None = Depends(_require_admin_key)):
     """Add a marketing tag to customer"""
     db.connect()
     db.add_tag(request.customer_id, request.tag)
@@ -145,7 +184,7 @@ async def add_customer_tag(request: AddTagRequest):
 
 
 @app.delete("/marketing/tags/{customer_id}/{tag}")
-async def remove_customer_tag(customer_id: str, tag: str):
+async def remove_customer_tag(customer_id: str, tag: str, _auth: None = Depends(_require_admin_key)):
     """Remove a marketing tag from customer"""
     db.connect()
     db.remove_tag(customer_id, tag)
@@ -153,7 +192,7 @@ async def remove_customer_tag(customer_id: str, tag: str):
 
 
 @app.get("/marketing/tags/{tag}")
-async def get_customers_by_tag(tag: str):
+async def get_customers_by_tag(tag: str, _auth: None = Depends(_require_admin_key)):
     """Get all customers with a specific tag"""
     db.connect()
     customer_ids = db.get_customers_by_tag(tag)
@@ -161,7 +200,7 @@ async def get_customers_by_tag(tag: str):
 
 
 @app.post("/marketing/segments")
-async def set_customer_segment(request: SetSegmentRequest):
+async def set_customer_segment(request: SetSegmentRequest, _auth: None = Depends(_require_admin_key)):
     """Set customer segment"""
     db.connect()
     db.set_segment(request.customer_id, request.segment)
@@ -169,7 +208,7 @@ async def set_customer_segment(request: SetSegmentRequest):
 
 
 @app.get("/marketing/segments/{segment}")
-async def get_customers_by_segment(segment: str):
+async def get_customers_by_segment(segment: str, _auth: None = Depends(_require_admin_key)):
     """Get all customers in a specific segment"""
     db.connect()
     customer_ids = db.get_customers_by_segment(segment)

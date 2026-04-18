@@ -12,6 +12,7 @@ Provides:
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
 import time
@@ -21,6 +22,8 @@ from pathlib import Path
 from threading import Lock
 from typing import Any
 
+from cryptography.fernet import Fernet, InvalidToken
+
 
 @dataclass
 class SecurityConfig:
@@ -29,6 +32,8 @@ class SecurityConfig:
     # Authentication
     enabled: bool = True
     api_keys_file: str | Path | None = None  # Path to API keys file (one SHA-256 hash per line)
+    sealed_policy_file: str | Path | None = None  # Encrypted JSON policy containing hashed API keys
+    sealed_policy_key: str | None = None  # Fernet key used to decrypt sealed_policy_file
     require_auth: bool = True  # If False, auth is optional (dev mode)
 
     # Rate limiting (operations per second)
@@ -96,8 +101,10 @@ class SecurityMiddleware:
         self._lock = Lock()
         self._audit_file = None
 
-        # Load API keys
-        if self.config.api_keys_file:
+        # Load API keys or sealed policy
+        if self.config.sealed_policy_file:
+            self._load_sealed_policy(self.config.sealed_policy_file, self.config.sealed_policy_key)
+        elif self.config.api_keys_file:
             self._load_api_keys(self.config.api_keys_file)
 
         # Open audit log
@@ -129,6 +136,51 @@ class SecurityMiddleware:
             if line and not line.startswith("#"):
                 if len(line) == 64 and all(c in "0123456789abcdef" for c in line.lower()):
                     self._api_keys.add(line.lower())
+
+    def _load_sealed_policy(self, path: str | Path, encryption_key: str | None) -> None:
+        """Load an encrypted JSON policy containing hashed API keys and auth rules."""
+        if not encryption_key:
+            raise ValueError("sealed_policy_key is required when sealed_policy_file is configured")
+
+        policy_path = Path(path)
+        if not policy_path.exists():
+            raise FileNotFoundError(f"Sealed policy file not found: {policy_path}")
+
+        try:
+            payload = json.loads(_fernet(encryption_key).decrypt(policy_path.read_bytes()))
+        except InvalidToken as exc:
+            raise ValueError("Unable to decrypt sealed policy file") from exc
+
+        self._apply_policy_payload(payload)
+
+    def _apply_policy_payload(self, payload: dict[str, Any]) -> None:
+        if not isinstance(payload, dict):
+            raise ValueError("Sealed policy payload must be an object")
+
+        hashed_keys = payload.get("api_key_hashes", [])
+        if not isinstance(hashed_keys, list):
+            raise ValueError("Sealed policy api_key_hashes must be a list")
+
+        self._api_keys.clear()
+        for item in hashed_keys:
+            key_hash = str(item).strip().lower()
+            if len(key_hash) == 64 and all(c in "0123456789abcdef" for c in key_hash):
+                self._api_keys.add(key_hash)
+
+        if "require_auth" in payload:
+            self.config.require_auth = bool(payload["require_auth"])
+
+        whitelist = payload.get("command_whitelist")
+        if whitelist is not None:
+            if not isinstance(whitelist, list) or not all(isinstance(item, str) and item for item in whitelist):
+                raise ValueError("Sealed policy command_whitelist must be a list of strings")
+            self.config.command_whitelist = {item.upper() for item in whitelist}
+
+        if "rate_limit_per_ip" in payload:
+            self.config.rate_limit_per_ip = int(payload["rate_limit_per_ip"])
+
+        if "rate_limit_per_key" in payload:
+            self.config.rate_limit_per_key = int(payload["rate_limit_per_key"])
 
     def _audit_log(self, event: str, **kwargs: Any) -> None:
         """Write security event to audit log."""
@@ -322,6 +374,16 @@ def hash_api_key(raw_key: str) -> str:
     return hashlib.sha256(raw_key.encode()).hexdigest().lower()
 
 
+def _fernet(secret: str) -> Fernet:
+    """Build a Fernet instance from either a Fernet key or an operator passphrase."""
+    secret_bytes = secret.encode("utf-8")
+    try:
+        return Fernet(secret_bytes)
+    except ValueError:
+        derived = base64.urlsafe_b64encode(hashlib.sha256(secret_bytes).digest())
+        return Fernet(derived)
+
+
 def generate_api_keys_file(keys: list[str], output_path: str | Path) -> None:
     """Generate API keys file with SHA-256 hashes.
 
@@ -342,3 +404,22 @@ def generate_api_keys_file(keys: list[str], output_path: str | Path) -> None:
         for key in keys:
             key_hash = hash_api_key(key)
             f.write(f"{key_hash}\n")
+
+
+def seal_security_policy(policy: dict[str, Any], encryption_key: str) -> bytes:
+    """Encrypt a security policy blob for server-side auth enforcement.
+
+    The policy is intended to live outside source control and can contain
+    hashed API keys plus server-side auth instructions such as command
+    whitelists and rate limits.
+    """
+    if not isinstance(policy, dict):
+        raise TypeError("policy must be a dict")
+    return _fernet(encryption_key).encrypt(
+        json.dumps(policy, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    )
+
+
+def write_sealed_policy_file(policy: dict[str, Any], output_path: str | Path, encryption_key: str) -> None:
+    """Write an encrypted security policy to disk."""
+    Path(output_path).write_bytes(seal_security_policy(policy, encryption_key))
