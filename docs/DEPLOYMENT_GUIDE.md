@@ -41,22 +41,23 @@ Complete guide for deploying AhanaFlow in various environments.
 
 ## Installation Methods
 
-### Method 1: In-repo SDK (not published to PyPI yet)
+### Method 1: From this repository
+
+The Python SDK is not on PyPI. Clone this repo, then install the in-tree SDK:
 
 ```bash
-# From a checkout of this repository (package is not on PyPI yet)
+git clone https://github.com/AhanaAi-Company/AhanaFlow.git
+cd AhanaFlow
 pip install -e ./sdk
-
-# Verify installation
-python -c "from backend.state_engine import CompressedStateEngine; print('✓ AhanaFlow installed')"
+PYTHONPATH=. python -m backend.universal_server.cli serve --help
 ```
 
 ### Method 2: From Source
 
 ```bash
 # Clone the repository
-git clone https://github.com/AhanaAI-Company/ahanaflow.git
-cd ahanaflow
+git clone https://github.com/AhanaAi-Company/AhanaFlow.git
+cd AhanaFlow
 
 # Create virtual environment
 python -m venv venv
@@ -92,8 +93,8 @@ docker build -t ghcr.io/ahanaai-company/ahanaflow:branch-33-controlled-deploymen
 Create a `.env` file in your project root:
 
 ```bash
-# Commercial license JWT (AHANAFLOW_API_KEY is a deprecated alias)
-AHANAFLOW_LICENSE_KEY=your_license_key_here
+# API Key (for commercial deployments)
+AHANAFLOW_LICENSE_KEY=your_api_key_here
 
 # Server Configuration
 AHANAFLOW_HOST=0.0.0.0
@@ -262,7 +263,9 @@ kubectl create secret generic ahanaflow-api-key \
   --from-literal=api-key=your_api_key_here \
   -n ahanaflow
 
-# This public tree does not ship k8s/. Use the inline YAML sample below.
+# Apply deployment
+# this tree has no k8s/; save the inline YAML below, then:
+kubectl apply -f ahanaflow-deployment.yaml
 
 # Verify deployment
 kubectl get pods -n ahanaflow
@@ -271,7 +274,7 @@ kubectl logs -f -n ahanaflow -l app=ahanaflow
 
 **Kubernetes Deployment YAML:**
 
-This public tree does not ship a `k8s/` folder. Copy this sample into your own manifest if you deploy on Kubernetes:
+This tree has no `k8s/` directory. Save the inline YAML below to a local file (for example `ahanaflow-deployment.yaml`), then apply that file:
 
 ```yaml
 apiVersion: v1
@@ -538,7 +541,7 @@ For operators using the built-in admin dashboard, the `/admin` UI now includes a
 generate three outputs without posting the secrets back to the server:
 
 - `.env.production` with `*_FILE` references
-- secret-file payloads you can mount from your own secret directory (this public tree does not ship `deploy/secrets/`)
+- secret-file payloads for `deploy/secrets/ahanaflow/`
 - a `kubectl create secret generic ... --from-file=...` command block
 
 If you want the same formatter without the admin login, use the public
@@ -707,7 +710,7 @@ tail -f /data/ahanaflow.log
 ### Getting Help
 
 - **Documentation:** https://www.ahanaflow.com/docs
-- **GitHub Issues:** https://github.com/AhanaAI-Company/ahanaflow/issues
+- **GitHub Issues:** https://github.com/AhanaAi-Company/AhanaFlow/issues
 - **Email Support:** support@ahanaai.com (paid plans only)
 - **Community Discord:** https://discord.gg/ahanaai (coming soon)
 
@@ -716,9 +719,9 @@ tail -f /data/ahanaflow.log
 ## Next Steps
 
 1. **[API Key Setup](./API_KEY_SETUP.md)** — Configure commercial license
-2. **[API Reference](./API_REFERENCE.md)** — Complete command documentation
+2. **[Production Readiness Report](./PRODUCTION_READINESS_REPORT.md)** — Public benchmark boundary
 3. **[Examples](../examples/)** — Working code samples
-4. **[Benchmarks](./BENCHMARKS.md)** — Performance tuning guide
+4. **[Secret Rotation Runbook](./SECRET_ROTATION_RUNBOOK.md)** — Runtime secret mounts
 
 ---
 

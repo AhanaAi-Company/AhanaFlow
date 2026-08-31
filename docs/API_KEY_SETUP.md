@@ -108,7 +108,6 @@ the customer entitlement.
 ```bash
 # Add to ~/.bashrc or ~/.zshrc
 export AHANAFLOW_LICENSE_KEY="YOUR_AHANAFLOW_LICENSE_KEY"
-# AHANAFLOW_API_KEY is a deprecated alias for the same value.
 
 # Reload shell
 source ~/.bashrc
@@ -161,64 +160,18 @@ spec:
               key: api-key
 ```
 
-### Method 2: Configuration File
+### Method 2: License key file
 
-Create `.ahanaflow.conf` in your project root:
+There is no `.ahanaflow.conf` reader, no `api_key=` argument on `CompressedStateEngine`, and no `--api-key` CLI flag.
 
-```ini
-[api]
-key = YOUR_AHANAFLOW_LICENSE_KEY
-```
-
-Or use YAML format:
-
-```yaml
-# ahanaflow.yaml
-api:
-  key: YOUR_AHANAFLOW_LICENSE_KEY
-```
-
-### Method 3: Programmatic Configuration
-
-**Python:**
-
-```python
-from backend.state_engine import CompressedStateEngine
-
-# Option A: Pass directly to engine
-engine = CompressedStateEngine(
-    "app.wal",
-    license_key="YOUR_AHANAFLOW_LICENSE_KEY",
-    durability_mode="safe"
-)
-
-# Option B: Set via environment before importing
-import os
-os.environ["AHANAFLOW_LICENSE_KEY"] = "YOUR_AHANAFLOW_LICENSE_KEY"
-
-# Then use normally
-engine = CompressedStateEngine("app.wal", durability_mode="safe")
-```
-
-**Node.js (Coming soon):**
-
-```javascript
-const { AhanaFlowClient } = require('ahanaflow');
-
-const client = new AhanaFlowClient({
-  apiKey: 'YOUR_AHANAFLOW_LICENSE_KEY',
-  host: 'localhost',
-  port: 9633
-});
-```
-
-### Method 4: Server Startup Flag
+If you prefer not to put the key in the process environment, point the server at a file:
 
 ```bash
-export AHANAFLOW_LICENSE_KEY="YOUR_AHANAFLOW_LICENSE_KEY"
-# AHANAFLOW_API_KEY is a deprecated alias for the same value.
-python -m backend.universal_server.cli serve --port 9633 --wal ./universal_server.wal
+export AHANAFLOW_LICENSE_KEY_FILE="/run/secrets/ahanaflow/license_key"
+python -m backend.universal_server.cli serve
 ```
+
+`AHANAFLOW_LICENSE_KEY` (or `AHANAFLOW_LICENSE_KEY_FILE`) authenticates clients to the TCP server. It does not download or install a Pro codec.
 
 ---
 
@@ -379,26 +332,11 @@ Warning: API key not found, using community-tier compression
 3. Restart the server after setting the environment variable
 4. Verify no typos in variable name (case-sensitive)
 
-### Still Using 50-60% Compression
+### License key vs Pro codec
 
-**Check your configuration:**
+`AHANAFLOW_LICENSE_KEY` authenticates clients to the TCP server. It does not download or install a Pro codec, and it does not change the on-disk community compression path by itself.
 
-```bash
-# Verify API key is set
-echo $AHANAFLOW_LICENSE_KEY
-
-# Check if Pro codec is installed
-python -c "
-try:
-  from ahana_codec import compress
-    print('✓ Pro codec available')
-except ImportError:
-    print('✗ Pro codec not installed')
-    print('  Pro codec is not on PyPI; retrieve it through the license portal')
-"
-```
-
-**Note:** The Pro codec is distributed through the license portal, not PyPI. Set `AHANAFLOW_LICENSE_KEY` (deprecated alias: `AHANAFLOW_API_KEY`) before starting the server.
+Commercial codec artifacts are issued through the license portal / backend manifest flow, not by installing a package from a public index.
 
 ### Key Rotation
 
@@ -417,7 +355,7 @@ To rotate your API key:
 ### Support Channels
 
 - **Documentation:** [www.ahanaflow.com/docs](https://www.ahanaflow.com/docs)
-- **GitHub Issues:** [Report bugs or request features](https://github.com/AhanaAI-Company/ahanaflow/issues)
+- **GitHub Issues:** [Report bugs or request features](https://github.com/AhanaAi-Company/AhanaFlow/issues)
 - **Email Support:** support@ahanaai.com (paid plans only)
 - **Status Page:** [status.ahanaflow.com](https://status.ahanaflow.com)
 
@@ -431,10 +369,10 @@ For enterprise inquiries:
 
 ## Next Steps
 
-1. **[Deployment Guide](./DEPLOYMENT_GUIDE.md)** — Deploy AhanaFlow with your API key
-2. **[API Reference](./API_REFERENCE.md)** — Complete command documentation
-3. **[Benchmarks](./BENCHMARKS.md)** — Measure your compression gains
-4. **[Examples](../examples/)** — Working code samples
+1. **[Deployment Guide](./DEPLOYMENT_GUIDE.md)** — Deploy AhanaFlow with your license key
+2. **[Production Readiness Report](./PRODUCTION_READINESS_REPORT.md)** — Public benchmark boundary
+3. **[Examples](../examples/)** — Working code samples
+4. **[Secret Rotation Runbook](./SECRET_ROTATION_RUNBOOK.md)** — Runtime secret mounts
 
 ---
 

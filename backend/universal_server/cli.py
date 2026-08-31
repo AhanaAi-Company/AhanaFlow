@@ -7,7 +7,7 @@ import signal
 import sys
 from pathlib import Path
 
-from backend.common import read_license_key, read_secret
+from backend.common import read_secret
 
 from .async_server import AsyncUniversalStateServer
 from .benchmark import run_benchmark
@@ -16,19 +16,7 @@ from .security import SecurityConfig
 from backend.vector_server import VectorStateServerV2
 
 
-def _announce_license() -> str:
-    license_key = read_license_key()
-    if license_key:
-        print("License: AHANAFLOW_LICENSE_KEY configured")
-    else:
-        print("License: not set (community tier)")
-    return license_key
-
-
 def _build_security_config(api_keys_file: str | None) -> SecurityConfig | None:
-    # Load the commercial license JWT so export AHANAFLOW_LICENSE_KEY is consumed
-    # at process start (AHANAFLOW_API_KEY remains a deprecated alias in the reader).
-    _announce_license()
     resolved = (
         api_keys_file
         or os.environ.get("AHANAFLOW_API_KEYS_FILE")
@@ -37,12 +25,14 @@ def _build_security_config(api_keys_file: str | None) -> SecurityConfig | None:
     ).strip()
     sealed_policy_file = os.environ.get("AHANAFLOW_SEALED_POLICY_FILE", "").strip()
     sealed_policy_key = read_secret("AHANAFLOW_SEALED_POLICY_KEY")
-    if not resolved and not sealed_policy_file:
+    license_key = read_secret("AHANAFLOW_LICENSE_KEY")
+    if not resolved and not sealed_policy_file and not license_key:
         return None
     return SecurityConfig(
         api_keys_file=resolved or None,
         sealed_policy_file=sealed_policy_file or None,
         sealed_policy_key=sealed_policy_key or None,
+        license_key=license_key or None,
         require_auth=True,
     )
 

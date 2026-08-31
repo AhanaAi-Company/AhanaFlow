@@ -6,7 +6,10 @@
 
 ## Install
 
+The JavaScript SDK is not published to npm. Install from this repository:
+
 ```bash
+# from repo root
 npm install ./sdk/javascript
 ```
 

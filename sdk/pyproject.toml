@@ -1,52 +1,22 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "ahanaflow"
 version = "1.0.0"
-description = "AhanaFlow — Compressed State & Event Engine SDK by AhanaAI"
+description = "AhanaFlow Python SDK. Install from this repository; not published to PyPI yet."
 readme = "python/README.md"
 license = { text = "Apache-2.0" }
 authors = [{ name = "AhanaAI", email = "jeremiah@ahanazip.com" }]
-keywords = [
-  "compression", "kv-store", "state-engine", "redis-alternative",
-  "event-streaming", "ahana", "ahanaai", "acp",
-]
-classifiers = [
-  "Development Status :: 5 - Production/Stable",
-  "Intended Audience :: Developers",
-  "License :: OSI Approved :: Apache Software License",
-  "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: 3.13",
-  "Topic :: Database",
-  "Topic :: System :: Archiving :: Compression",
-]
 requires-python = ">=3.11"
 dependencies = []
-
-[project.optional-dependencies]
-dev = ["pytest>=8", "pytest-asyncio>=0.23"]
-
-[project.urls]
-Homepage = "https://ahanaai.com"
-Documentation = "https://github.com/AhanaAi-Company/AhanaFlow"
-Repository = "https://github.com/AhanaAi-Company/AhanaFlow"
-"Bug Tracker" = "https://github.com/AhanaAi-Company/AhanaFlow/issues"
 
 [project.scripts]
 ahanaflow = "ahanaflow._cli:main"
 
-[tool.hatch.build.targets.wheel]
-packages = ["python/ahanaflow"]
+[tool.setuptools.package-dir]
+"" = "python"
 
-[tool.hatch.build.targets.wheel.sources]
-"python" = ""
-
-[tool.hatch.build.targets.sdist]
-only-include = ["python/ahanaflow", "python/README.md", "python/pyproject.toml"]
-
-[tool.pytest.ini_options]
-asyncio_mode = "auto"
+[tool.setuptools.packages.find]
+where = ["python"]

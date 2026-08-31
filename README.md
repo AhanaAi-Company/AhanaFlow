@@ -61,29 +61,16 @@ Canonical buyer-facing docs in this repo:
 
 ## Quick Start
 
-The ahanaflow Python and JavaScript SDKs are not published to package indexes yet.
+This public tree has no `k8s/`, `reports/`, `v1_1/`, or `deploy/secrets/`. Start the in-repo single-node runtime and install the SDKs from this checkout (not published to PyPI or npm):
 
-**Single-node compose** (Dockerfile CMD):
 ```bash
 docker compose --profile single-node up -d
-```
 
-**In-tree CLI** (no Docker):
-```bash
-python -m backend.universal_server.cli serve --wal ./universal_server.wal --host 127.0.0.1 --port 9633
-python -m backend.universal_server.cli serve-vector-v2 --wal ./vector_server.wal --host 127.0.0.1 --port 9644
-```
-
-**SDKs from this checkout:**
-```bash
+# Python SDK (not on PyPI)
 pip install -e ./sdk
-npm install ./sdk/javascript
-```
 
-Commercial license (optional):
-```bash
-export AHANAFLOW_LICENSE_KEY="your_license_key_here"
-# AHANAFLOW_API_KEY is a deprecated alias for the same value.
+# JavaScript SDK (not on npm)
+npm install ./sdk/javascript
 ```
 
 Smoke-test state plus vector in one script:
@@ -161,7 +148,14 @@ echo '{"cmd":"PING"}' | nc localhost 9633
 
 ### Kubernetes
 
-This public tree does not ship a k8s/ directory. Use the inline sample in docs/DEPLOYMENT_GUIDE.md if you need a starting manifest.
+This tree has no `k8s/` directory. Copy the inline example from [docs/DEPLOYMENT_GUIDE.md](./docs/DEPLOYMENT_GUIDE.md), save it locally, then apply that file:
+
+```bash
+kubectl apply -f ahanaflow-deployment.yaml
+kubectl port-forward svc/ahanaflow 9633:9633
+```
+
+See [docs/DEPLOYMENT_GUIDE.md](./docs/DEPLOYMENT_GUIDE.md) for complete deployment instructions.
 
 ---
 
@@ -191,24 +185,14 @@ This public tree does not ship a k8s/ directory. Use the inline sample in docs/D
 
 1. Visit [www.ahanaflow.com](https://www.ahanaflow.com)
 2. Click "Get API Key" and choose your plan
-3. Add your API key to your deployment:
-
-```python
-# Configure your API key
-engine = CompressedStateEngine(
-    "app.wal",
-    license_key="your_license_key_here",  # Unlocks Pro compression when the licensed codec is present
-    durability_mode="safe"
-)
-```
-
-Or set via environment variable:
+3. Authenticate the TCP server with your license key (`CompressedStateEngine` does not take `api_key=`):
 
 ```bash
 export AHANAFLOW_LICENSE_KEY="your_license_key_here"
-# AHANAFLOW_API_KEY is a deprecated alias.
 python -m backend.universal_server.cli serve
 ```
+
+`AHANAFLOW_LICENSE_KEY` authenticates clients to the TCP server. It does not download or install a Pro codec.
 
 For production, prefer `*_FILE` runtime secrets and a sealed policy file over plaintext env vars. The customer/admin surfaces now support `AHANAFLOW_ADMIN_API_KEY_FILE`, `AHANAFLOW_SERVICE_API_KEY_FILE`, `AHANAFLOW_SEALED_POLICY_KEY_FILE`, `STRIPE_SECRET_KEY_FILE`, `STRIPE_WEBHOOK_SECRET_FILE`, and `AHANAFLOW_SIGNING_KEY_FILE`.
 
@@ -263,7 +247,7 @@ pipe.incr("counter")
 results = pipe.execute()
 ```
 
-See [docs/PRODUCTION_READINESS_REPORT.md](./docs/PRODUCTION_READINESS_REPORT.md) for detailed performance analysis.
+See [docs/PRODUCTION_READINESS_REPORT.md](./docs/PRODUCTION_READINESS_REPORT.md) for the current public benchmark boundary.
 
 ---
 
@@ -315,12 +299,11 @@ See [docs/PRODUCTION_READINESS_REPORT.md](./docs/PRODUCTION_READINESS_REPORT.md)
 
 ## Documentation
 
-- [Deployment Guide](./docs/DEPLOYMENT_GUIDE.md) — Docker, systemd, inline Kubernetes sample
+- [Deployment Guide](./docs/DEPLOYMENT_GUIDE.md) — Docker, Kubernetes, systemd
 - [API Key Setup](./docs/API_KEY_SETUP.md) — How to configure commercial licenses
-- [Production Readiness Report](./docs/PRODUCTION_READINESS_REPORT.md) — Current public claim boundary
-- [Vector Claim Boundary](./docs/VECTOR_STATE_SERVER_V2_CLAIM_BOUNDARY.md) — Approved vector lane wording
+- [Production Readiness Report](./docs/PRODUCTION_READINESS_REPORT.md) — Public benchmark boundary
+- [Vector State Server V2 Claim Boundary](./docs/VECTOR_STATE_SERVER_V2_CLAIM_BOUNDARY.md) — Approved vector claim surface
 - [Secret Rotation Runbook](./docs/SECRET_ROTATION_RUNBOOK.md) — Runtime secret mounts and rotation
-- [Deploy Helper Release Note](./docs/RELEASE_NOTE_DEPLOY_HELPER_2026-04-17.md) — Local deploy-helper formatter
 
 ---
 
@@ -338,7 +321,7 @@ See [examples/](./examples/) for complete working examples:
 
 - **Website:** [www.ahanaflow.com](https://www.ahanaflow.com)
 - **Documentation:** [docs/](./docs/)
-- **GitHub Issues:** [Report bugs or request features](https://github.com/AhanaAI-Company/ahanaflow/issues)
+- **GitHub Issues:** [Report bugs or request features](https://github.com/AhanaAi-Company/AhanaFlow/issues)
 - **Discord:** [Join our community](https://discord.gg/ahanaai) (coming soon)
 - **Email Support:** support@ahanaai.com (paid plans only)
 

@@ -6,9 +6,13 @@
 
 ## Install
 
+The Python SDK is not published to PyPI. Install from this repository:
+
 ```bash
-# Not published to PyPI yet. From the repository root:
+# from repo root
 pip install -e ./sdk
+# ./sdk/python also works
+pip install -e ./sdk/python
 ```
 
 Requires Python 3.11+. No external dependencies — pure stdlib.

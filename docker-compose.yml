@@ -1,16 +1,18 @@
-# AhanaFlow single-node baseline
+# AhanaFlow single-node.
+# This public tree does not include k8s/, reports/, v1_1/, or deploy/secrets/.
+#
 #   docker compose --profile single-node up -d
 #
-# Uses Dockerfile CMD (/app/run_servers.sh) which starts the in-tree CLIs:
-#   python -m backend.universal_server.cli serve --wal ... --host ... --port ...
-#   python -m backend.universal_server.cli serve-vector-v2 --wal ... --host ... --port ...
-# This public tree does not ship k8s/, v1_1/, or deploy/secrets/.
-
+# Uses the Dockerfile CMD, which starts the in-tree CLIs:
+#   python -m backend.universal_server.cli serve
+#   python -m backend.universal_server.cli serve-vector-v2
+#
 services:
   single-node:
     profiles: ["single-node"]
     build: .
     image: ahana-event-streams:branch-33-controlled-deployment-v1.0
+    working_dir: /app
     ports:
       - "9633:9633"
       - "9644:9644"
@@ -23,7 +25,6 @@ services:
       VECTOR_HOST: "0.0.0.0"
       VECTOR_PORT: "9644"
       VECTOR_WAL: "/data/vector_server.wal"
-      AHANAFLOW_LICENSE_KEY: ${AHANAFLOW_LICENSE_KEY:-}
     restart: unless-stopped
 
 volumes:

@@ -39,13 +39,7 @@ LABEL org.opencontainers.image.title="AhanaAI Event Streams" \
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/app \
-    UNIVERSAL_HOST=0.0.0.0 \
-    UNIVERSAL_PORT=9633 \
-    UNIVERSAL_WAL=/data/universal_server.wal \
-    VECTOR_HOST=0.0.0.0 \
-    VECTOR_PORT=9644 \
-    VECTOR_WAL=/data/vector_server.wal
+    PYTHONPATH=/app
 
 # Non-root user for security
 RUN useradd -r -u 1000 -m -s /sbin/nologin appuser
@@ -113,6 +107,13 @@ EXPOSE 9633 9644 8090
 COPY --chown=appuser:appuser <<'EOF' /app/run_servers.sh
 #!/bin/bash
 set -e
+
+UNIVERSAL_HOST="${UNIVERSAL_HOST:-0.0.0.0}"
+UNIVERSAL_PORT="${UNIVERSAL_PORT:-9633}"
+UNIVERSAL_WAL="${UNIVERSAL_WAL:-/data/universal_server.wal}"
+VECTOR_HOST="${VECTOR_HOST:-0.0.0.0}"
+VECTOR_PORT="${VECTOR_PORT:-9644}"
+VECTOR_WAL="${VECTOR_WAL:-/data/vector_server.wal}"
 
 echo "Starting AhanaAI Event Streams servers..."
 echo "UniversalStateServer: ${UNIVERSAL_HOST}:${UNIVERSAL_PORT}"

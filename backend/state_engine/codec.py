@@ -6,11 +6,12 @@
 #
 #   1. Pro binary  (ahana_codec installed):
 #      Trained 65 KB WAL dictionary — ~88.7% footprint reduction.
-#      Distributed through the license portal, not PyPI.
+#      Not published to PyPI. Commercial artifacts are issued through the
+#      license portal (AHANAFLOW_LICENSE_KEY), not `pip install`.
 #
 #   2. Community  (ahana_codec absent, zstandard present):
 #      Plain zstd level-1 — ~50-60% footprint reduction.
-#      Client SDK: pip install -e ./sdk  (this tree; not published to PyPI yet)
+#      SDK: pip install -e ./sdk from this repository (not on PyPI yet).
 #
 #   3. Last resort  (neither present):
 #      gzip level-6 fallback — always available.
