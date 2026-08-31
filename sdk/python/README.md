@@ -6,8 +6,16 @@
 
 ## Install
 
+From the repository root (the package is not on a public index):
+
 ```bash
-pip install ahanaflow
+pip install -e ./sdk/python
+```
+
+Or from this directory:
+
+```bash
+pip install -e .
 ```
 
 Requires Python 3.11+. No external dependencies — pure stdlib.
@@ -143,7 +151,7 @@ client.set_durability_mode("fast")   # no restart needed
 
 ```bash
 # Verified Branch 33 local CLI surface:
-python -m universal_server.cli serve \
+python -m backend.universal_server.cli serve \
     --wal ./state.wal \
     --host 127.0.0.1 \
     --port 9633

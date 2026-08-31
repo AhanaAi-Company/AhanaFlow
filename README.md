@@ -61,15 +61,39 @@ Canonical buyer-facing docs in this repo:
 
 ## Quick Start
 
-Run single-node:
+This repository is the install source.
+
+The client package is not published to a public index; install from this tree.
+
+Clone the repo, create a venv, then install the in-repo Python SDK:
+
 ```bash
-docker compose --profile single-node up -d
+git clone https://github.com/AhanaAi-Company/AhanaFlow.git
+cd AhanaFlow
+
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e ./sdk/python
+# Node SDK lives in sdk/javascript
 ```
-Mount runtime secrets from `deploy/secrets/` or your secret manager. Do not commit live keys, signing material, or sealed policy files into the repo.
-Run the HA pilot for controlled multi-node pilots; see [High Availability](./docs/DEPLOYMENT_GUIDE.md#3-high-availability):
+
+Start the servers that exist in this tree:
+
 ```bash
-docker compose --profile ha-pilot up -d
+mkdir -p data
+python -m backend.universal_server.cli serve --wal ./data/universal_server.wal --host 127.0.0.1 --port 9633
+# second terminal:
+python -m backend.universal_server.cli serve-vector-v2 --wal ./data/vector_server.wal --host 127.0.0.1 --port 9644
 ```
+
+Or build the in-repo image:
+
+```bash
+docker compose --profile single-node up -d --build
+```
+
+Commercial deploys: set AHANAFLOW_LICENSE_KEY in the environment. Do not commit live keys, signing material, or sealed policy files.
+
 Smoke-test state plus vector in one script:
 ```python
 import json,socket; call=lambda p,c:(lambda s:(s.sendall((json.dumps(c)+"\n").encode()),json.loads(s.recv(16384).decode()))[1])(socket.create_connection(("127.0.0.1",p)))
@@ -145,13 +169,8 @@ echo '{"cmd":"PING"}' | nc localhost 9633
 
 ### Kubernetes
 
-```bash
-# Apply the manifests
-kubectl apply -f k8s/ahanaflow-deployment.yaml
+This repository does not ship a k8s/ tree. Use Docker Compose for local/pilot deploys, or copy the example YAML in docs/DEPLOYMENT_GUIDE.md into your own cluster manifests.
 
-# Port forward to test
-kubectl port-forward svc/ahanaflow 9633:9633
-```
 
 See [docs/DEPLOYMENT_GUIDE.md](./docs/DEPLOYMENT_GUIDE.md) for complete deployment instructions.
 
@@ -183,22 +202,11 @@ See [docs/DEPLOYMENT_GUIDE.md](./docs/DEPLOYMENT_GUIDE.md) for complete deployme
 
 1. Visit [www.ahanaflow.com](https://www.ahanaflow.com)
 2. Click "Get API Key" and choose your plan
-3. Add your API key to your deployment:
-
-```python
-# Configure your API key
-engine = CompressedStateEngine(
-    "app.wal",
-    api_key="your_api_key_here",  # Unlocks Pro compression
-    durability_mode="safe"
-)
-```
-
-Or set via environment variable:
+3. Add the license key to the server environment (canonical name AHANAFLOW_LICENSE_KEY):
 
 ```bash
-export AHANAFLOW_API_KEY="your_api_key_here"
-python -m backend.universal_server.cli serve
+export AHANAFLOW_LICENSE_KEY="YOUR_AHANAFLOW_LICENSE_KEY"
+python -m backend.universal_server.cli serve --wal ./data/universal_server.wal --host 127.0.0.1 --port 9633
 ```
 
 For production, prefer `*_FILE` runtime secrets and a sealed policy file over plaintext env vars. The customer/admin surfaces now support `AHANAFLOW_ADMIN_API_KEY_FILE`, `AHANAFLOW_SERVICE_API_KEY_FILE`, `AHANAFLOW_SEALED_POLICY_KEY_FILE`, `STRIPE_SECRET_KEY_FILE`, `STRIPE_WEBHOOK_SECRET_FILE`, and `AHANAFLOW_SIGNING_KEY_FILE`.

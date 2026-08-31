@@ -7,7 +7,7 @@ import signal
 import sys
 from pathlib import Path
 
-from backend.common import read_secret
+from backend.common import read_license_key, read_secret
 
 from .async_server import AsyncUniversalStateServer
 from .benchmark import run_benchmark
@@ -78,6 +78,7 @@ def main() -> int:
     args = parser.parse_args()
 
     if args.command == "serve":
+        read_license_key()
         signal.signal(signal.SIGTERM, signal.default_int_handler)
         server_class = AsyncUniversalStateServer if args.runtime == "async" else UniversalStateServer
         server_kwargs = {
@@ -104,6 +105,7 @@ def main() -> int:
         return 0
 
     if args.command == "serve-vector-v2":
+        read_license_key()
         signal.signal(signal.SIGTERM, signal.default_int_handler)
         server = VectorStateServerV2(
             Path(args.wal),

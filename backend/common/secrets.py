@@ -4,6 +4,15 @@ import os
 from pathlib import Path
 
 
+# Canonical commercial-license env name. Older names remain as aliases.
+LICENSE_KEY_ENV_NAMES = (
+    "AHANAFLOW_LICENSE_KEY",
+    "LICENSE_KEY",
+    "AHANAFLOW_API_KEY",
+    "API_KEY",
+)
+
+
 def read_secret(name: str, default: str = "") -> str:
     """Read a secret from NAME or NAME_FILE.
 
@@ -24,3 +33,12 @@ def read_secret(name: str, default: str = "") -> str:
 
 def secret_is_configured(name: str) -> bool:
     return bool(read_secret(name, ""))
+
+
+def read_license_key(default: str = "") -> str:
+    """Return the commercial license key from the canonical env name or aliases."""
+    for name in LICENSE_KEY_ENV_NAMES:
+        value = read_secret(name)
+        if value:
+            return value
+    return default

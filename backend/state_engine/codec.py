@@ -6,11 +6,11 @@
 #
 #   1. Pro binary  (ahana_codec installed):
 #      Trained 65 KB WAL dictionary — ~88.7% footprint reduction.
-#      Install: pip install ahanaflow-pro  (licensed binary, no source)
+#      Install: licensed binary via the commercial artifact portal (not a public index)
 #
 #   2. Community  (ahana_codec absent, zstandard present):
 #      Plain zstd level-1 — ~50-60% footprint reduction.
-#      Install: pip install ahanaflow  (open-source, fully functional)
+#      Install: pip install -e ./sdk/python  (open-source client; servers live in backend/)
 #
 #   3. Last resort  (neither present):
 #      gzip level-6 fallback — always available.

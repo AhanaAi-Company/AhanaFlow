@@ -41,22 +41,22 @@ Complete guide for deploying AhanaFlow in various environments.
 
 ## Installation Methods
 
-### Method 1: pip Install (Simplest)
+### Method 1: Python SDK from this repository
 
 ```bash
 # Community Edition (free for non-commercial use)
-pip install ahanaflow
+pip install -e ./sdk/python
 
 # Verify installation
-python -c "from backend.state_engine import CompressedStateEngine; print('✓ AhanaFlow installed')"
+python -c "from ahanaflow import AhanaFlowClient; print('SDK import ok')"
 ```
 
 ### Method 2: From Source
 
 ```bash
 # Clone the repository
-git clone https://github.com/AhanaAI-Company/ahanaflow.git
-cd ahanaflow
+git clone https://github.com/AhanaAi-Company/AhanaFlow.git
+cd AhanaFlow
 
 # Create virtual environment
 python -m venv venv
@@ -66,7 +66,7 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
 # Install in editable mode
-pip install -e .
+pip install -e ./sdk/python
 
 # Run tests
 python -m pytest tests/ -v
@@ -93,7 +93,7 @@ Create a `.env` file in your project root:
 
 ```bash
 # API Key (for commercial deployments)
-AHANAFLOW_API_KEY=your_api_key_here
+AHANAFLOW_LICENSE_KEY=YOUR_AHANAFLOW_LICENSE_KEY
 
 # Server Configuration
 AHANAFLOW_HOST=0.0.0.0
@@ -144,7 +144,7 @@ security:
   auth_token: null
 
 api:
-  key: null  # Set via AHANAFLOW_API_KEY environment variable
+  key: null  # Set via AHANAFLOW_LICENSE_KEY environment variable
 
 logging:
   level: INFO
@@ -195,7 +195,7 @@ docker run -d \
   -p 9633:9633 \
   -p 9644:9644 \
   -v ~/ahanaflow-data:/data \
-  -e AHANAFLOW_API_KEY=your_api_key_here \
+  -e AHANAFLOW_LICENSE_KEY=YOUR_AHANAFLOW_LICENSE_KEY \
   -e AHANAFLOW_DURABILITY_MODE=safe \
   ghcr.io/ahanaai-company/ahanaflow:latest
 
@@ -223,7 +223,7 @@ services:
     volumes:
       - ./data:/data
     environment:
-      - AHANAFLOW_API_KEY=${AHANAFLOW_API_KEY}
+      - AHANAFLOW_LICENSE_KEY=${AHANAFLOW_LICENSE_KEY}
       - AHANAFLOW_DURABILITY_MODE=safe
       - AHANAFLOW_LOG_LEVEL=INFO
     restart: unless-stopped
@@ -259,11 +259,11 @@ kubectl create namespace ahanaflow
 
 # Create secret for API key
 kubectl create secret generic ahanaflow-api-key \
-  --from-literal=api-key=your_api_key_here \
+  --from-literal=api-key=YOUR_AHANAFLOW_LICENSE_KEY \
   -n ahanaflow
 
 # Apply deployment
-kubectl apply -f k8s/ahanaflow-deployment.yaml
+# this repo does not ship k8s/; copy the example YAML below into your cluster
 
 # Verify deployment
 kubectl get pods -n ahanaflow
@@ -272,7 +272,7 @@ kubectl logs -f -n ahanaflow -l app=ahanaflow
 
 **Kubernetes Deployment YAML:**
 
-Create `k8s/ahanaflow-deployment.yaml`:
+Example Deployment YAML (this repo does not ship a k8s/ tree; save the YAML in your own cluster repo):
 
 ```yaml
 apiVersion: v1
@@ -312,7 +312,7 @@ spec:
         - containerPort: 9644
           name: vector
         env:
-        - name: AHANAFLOW_API_KEY
+        - name: AHANAFLOW_LICENSE_KEY
           valueFrom:
             secretKeyRef:
               name: ahanaflow-api-key
@@ -392,7 +392,7 @@ Type=simple
 User=ahanaflow
 Group=ahanaflow
 WorkingDirectory=/opt/ahanaflow
-Environment="AHANAFLOW_API_KEY=your_api_key_here"
+Environment="AHANAFLOW_LICENSE_KEY=YOUR_AHANAFLOW_LICENSE_KEY"
 Environment="AHANAFLOW_DURABILITY_MODE=safe"
 ExecStart=/opt/ahanaflow/venv/bin/python -m backend.universal_server.cli serve --port 9633 --host 0.0.0.0
 Restart=on-failure
@@ -414,7 +414,7 @@ sudo chown ahanaflow:ahanaflow /opt/ahanaflow/data
 
 # Install AhanaFlow
 sudo -u ahanaflow python -m venv /opt/ahanaflow/venv
-sudo -u ahanaflow /opt/ahanaflow/venv/bin/pip install ahanaflow
+sudo -u ahanaflow /opt/ahanaflow/venv/bin/pip install -e /opt/ahanaflow/src/sdk/python
 
 # Enable service
 sudo systemctl daemon-reload
@@ -539,7 +539,7 @@ For operators using the built-in admin dashboard, the `/admin` UI now includes a
 generate three outputs without posting the secrets back to the server:
 
 - `.env.production` with `*_FILE` references
-- secret-file payloads for `deploy/secrets/ahanaflow/`
+- secret-file payloads you generate locally and mount at runtime (do not commit them to git)
 - a `kubectl create secret generic ... --from-file=...` command block
 
 If you want the same formatter without the admin login, use the public

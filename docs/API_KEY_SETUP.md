@@ -76,7 +76,7 @@ Go to **[www.ahanaflow.com](https://www.ahanaflow.com)** and click **"Get API Ke
 
 ```bash
 # Example API key format
-YOUR_AHANAFLOW_API_KEY
+YOUR_AHANAFLOW_LICENSE_KEY
 ```
 
 **Security Best Practices:**
@@ -107,30 +107,30 @@ the customer entitlement.
 
 ```bash
 # Add to ~/.bashrc or ~/.zshrc
-export AHANAFLOW_API_KEY="YOUR_AHANAFLOW_API_KEY"
+export AHANAFLOW_LICENSE_KEY="YOUR_AHANAFLOW_LICENSE_KEY"
 
 # Reload shell
 source ~/.bashrc
 
 # Verify
-echo $AHANAFLOW_API_KEY
+echo $AHANAFLOW_LICENSE_KEY
 ```
 
 **Windows PowerShell:**
 
 ```powershell
 # Set permanently
-[System.Environment]::SetEnvironmentVariable("AHANAFLOW_API_KEY", "YOUR_AHANAFLOW_API_KEY", "User")
+[System.Environment]::SetEnvironmentVariable("AHANAFLOW_LICENSE_KEY", "YOUR_AHANAFLOW_LICENSE_KEY", "User")
 
 # Verify
-$env:AHANAFLOW_API_KEY
+$env:AHANAFLOW_LICENSE_KEY
 ```
 
 **Docker:**
 
 ```bash
 docker run -d \
-  -e AHANAFLOW_API_KEY="YOUR_AHANAFLOW_API_KEY" \
+  -e AHANAFLOW_LICENSE_KEY="YOUR_AHANAFLOW_LICENSE_KEY" \
   ghcr.io/ahanaai-company/ahanaflow:branch-33-controlled-deployment-v1.0
 ```
 
@@ -139,7 +139,7 @@ docker run -d \
 ```bash
 # Create secret
 kubectl create secret generic ahanaflow-api-key \
-  --from-literal=api-key=YOUR_AHANAFLOW_API_KEY \
+  --from-literal=api-key=YOUR_AHANAFLOW_LICENSE_KEY \
   -n your-namespace
 
 # Reference in deployment
@@ -153,7 +153,7 @@ spec:
       containers:
       - name: ahanaflow
         env:
-        - name: AHANAFLOW_API_KEY
+        - name: AHANAFLOW_LICENSE_KEY
           valueFrom:
             secretKeyRef:
               name: ahanaflow-api-key
@@ -166,7 +166,7 @@ Create `.ahanaflow.conf` in your project root:
 
 ```ini
 [api]
-key = YOUR_AHANAFLOW_API_KEY
+key = YOUR_AHANAFLOW_LICENSE_KEY
 ```
 
 Or use YAML format:
@@ -174,7 +174,7 @@ Or use YAML format:
 ```yaml
 # ahanaflow.yaml
 api:
-  key: YOUR_AHANAFLOW_API_KEY
+  key: YOUR_AHANAFLOW_LICENSE_KEY
 ```
 
 ### Method 3: Programmatic Configuration
@@ -182,20 +182,10 @@ api:
 **Python:**
 
 ```python
+import os
 from backend.state_engine import CompressedStateEngine
 
-# Option A: Pass directly to engine
-engine = CompressedStateEngine(
-    "app.wal",
-    api_key="YOUR_AHANAFLOW_API_KEY",
-    durability_mode="safe"
-)
-
-# Option B: Set via environment before importing
-import os
-os.environ["AHANAFLOW_API_KEY"] = "YOUR_AHANAFLOW_API_KEY"
-
-# Then use normally
+os.environ["AHANAFLOW_LICENSE_KEY"] = "YOUR_AHANAFLOW_LICENSE_KEY"
 engine = CompressedStateEngine("app.wal", durability_mode="safe")
 ```
 
@@ -205,7 +195,7 @@ engine = CompressedStateEngine("app.wal", durability_mode="safe")
 const { AhanaFlowClient } = require('ahanaflow');
 
 const client = new AhanaFlowClient({
-  apiKey: 'YOUR_AHANAFLOW_API_KEY',
+  apiKey: 'YOUR_AHANAFLOW_LICENSE_KEY',
   host: 'localhost',
   port: 9633
 });
@@ -214,10 +204,8 @@ const client = new AhanaFlowClient({
 ### Method 4: Server Startup Flag
 
 ```bash
-# Start server with API key
-python -m backend.universal_server.cli serve \
-  --port 9633 \
-  --api-key YOUR_AHANAFLOW_API_KEY
+export AHANAFLOW_LICENSE_KEY="YOUR_AHANAFLOW_LICENSE_KEY"
+python -m backend.universal_server.cli serve --wal ./data/universal_server.wal --host 127.0.0.1 --port 9633
 ```
 
 ---
@@ -233,7 +221,7 @@ from backend.state_engine import CompressedStateEngine
 import os
 
 # Check if API key is set
-api_key = os.environ.get("AHANAFLOW_API_KEY")
+api_key = os.environ.get("AHANAFLOW_LICENSE_KEY")
 print(f"API Key configured: {'✓' if api_key else '✗'}")
 
 # Create engine and check compression
@@ -248,7 +236,7 @@ if compression_ratio > 0.80:
     print("✓ Using Pro-tier compression (88.7% trained dictionary)")
 else:
     print("⚠ Using Community-tier compression (50-60% baseline)")
-    print("  Ensure AHANAFLOW_API_KEY is set correctly")
+    print("  Ensure AHANAFLOW_LICENSE_KEY is set correctly")
 
 engine.close()
 os.remove("test.wal")  # Cleanup
@@ -371,7 +359,7 @@ Warning: API key not found, using community-tier compression
 ```
 
 **Solutions:**
-1. Ensure `AHANAFLOW_API_KEY` environment variable is set
+1. Ensure `AHANAFLOW_LICENSE_KEY` environment variable is set
 2. Check the variable is accessible to the process:
    ```bash
    printenv | grep AHANAFLOW
@@ -385,7 +373,7 @@ Warning: API key not found, using community-tier compression
 
 ```bash
 # Verify API key is set
-echo $AHANAFLOW_API_KEY
+echo $AHANAFLOW_LICENSE_KEY
 
 # Check if Pro codec is installed
 python -c "
@@ -394,7 +382,7 @@ try:
     print('✓ Pro codec available')
 except ImportError:
     print('✗ Pro codec not installed')
-    print('  Install with: pip install ahanaflow-pro')
+    print('  Install with: install the licensed pro binary from the commercial artifact portal')
 "
 ```
 
