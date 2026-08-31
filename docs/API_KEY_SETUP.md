@@ -76,7 +76,7 @@ Go to **[www.ahanaflow.com](https://www.ahanaflow.com)** and click **"Get API Ke
 
 ```bash
 # Example API key format
-ahanaflow_live_5k8j2n9f1x6c4d8e7g3h2m1p9q7r4s6t8v2w5y1z3
+YOUR_LICENSE_KEY
 ```
 
 **Security Best Practices:**
@@ -107,7 +107,7 @@ the customer entitlement.
 
 ```bash
 # Add to ~/.bashrc or ~/.zshrc
-export AHANAFLOW_API_KEY="ahanaflow_live_5k8j2n9f1x6c4d8e7g3h2m1p9q7r4s6t8v2w5y1z3"
+export AHANAFLOW_API_KEY="YOUR_LICENSE_KEY"
 
 # Reload shell
 source ~/.bashrc
@@ -120,7 +120,7 @@ echo $AHANAFLOW_API_KEY
 
 ```powershell
 # Set permanently
-[System.Environment]::SetEnvironmentVariable("AHANAFLOW_API_KEY", "ahanaflow_live_5k8j2n9f1x6c4d8e7g3h2m1p9q7r4s6t8v2w5y1z3", "User")
+[System.Environment]::SetEnvironmentVariable("AHANAFLOW_API_KEY", "YOUR_LICENSE_KEY", "User")
 
 # Verify
 $env:AHANAFLOW_API_KEY
@@ -130,7 +130,7 @@ $env:AHANAFLOW_API_KEY
 
 ```bash
 docker run -d \
-  -e AHANAFLOW_API_KEY="ahanaflow_live_5k8j2n9f1x6c4d8e7g3h2m1p9q7r4s6t8v2w5y1z3" \
+  -e AHANAFLOW_API_KEY="YOUR_LICENSE_KEY" \
   ghcr.io/ahanaai-company/ahanaflow:branch-33-controlled-deployment-v1.0
 ```
 
@@ -139,7 +139,7 @@ docker run -d \
 ```bash
 # Create secret
 kubectl create secret generic ahanaflow-api-key \
-  --from-literal=api-key=ahanaflow_live_5k8j2n9f1x6c4d8e7g3h2m1p9q7r4s6t8v2w5y1z3 \
+  --from-literal=api-key=YOUR_LICENSE_KEY \
   -n your-namespace
 
 # Reference in deployment
@@ -166,7 +166,7 @@ Create `.ahanaflow.conf` in your project root:
 
 ```ini
 [api]
-key = ahanaflow_live_5k8j2n9f1x6c4d8e7g3h2m1p9q7r4s6t8v2w5y1z3
+key = YOUR_LICENSE_KEY
 ```
 
 Or use YAML format:
@@ -174,7 +174,7 @@ Or use YAML format:
 ```yaml
 # ahanaflow.yaml
 api:
-  key: ahanaflow_live_5k8j2n9f1x6c4d8e7g3h2m1p9q7r4s6t8v2w5y1z3
+  key: YOUR_LICENSE_KEY
 ```
 
 ### Method 3: Programmatic Configuration
@@ -187,13 +187,13 @@ from backend.state_engine import CompressedStateEngine
 # Option A: Pass directly to engine
 engine = CompressedStateEngine(
     "app.wal",
-    api_key="ahanaflow_live_5k8j2n9f1x6c4d8e7g3h2m1p9q7r4s6t8v2w5y1z3",
+    api_key="YOUR_LICENSE_KEY",
     durability_mode="safe"
 )
 
 # Option B: Set via environment before importing
 import os
-os.environ["AHANAFLOW_API_KEY"] = "ahanaflow_live_5k8j2n9f1x6c4d8e7g3h2m1p9q7r4s6t8v2w5y1z3"
+os.environ["AHANAFLOW_API_KEY"] = "YOUR_LICENSE_KEY"
 
 # Then use normally
 engine = CompressedStateEngine("app.wal", durability_mode="safe")
@@ -205,7 +205,7 @@ engine = CompressedStateEngine("app.wal", durability_mode="safe")
 const { AhanaFlowClient } = require('ahanaflow');
 
 const client = new AhanaFlowClient({
-  apiKey: 'ahanaflow_live_5k8j2n9f1x6c4d8e7g3h2m1p9q7r4s6t8v2w5y1z3',
+  apiKey: 'YOUR_LICENSE_KEY',
   host: 'localhost',
   port: 9633
 });
@@ -217,7 +217,7 @@ const client = new AhanaFlowClient({
 # Start server with API key
 python -m backend.universal_server.cli serve \
   --port 9633 \
-  --api-key ahanaflow_live_5k8j2n9f1x6c4d8e7g3h2m1p9q7r4s6t8v2w5y1z3
+  --api-key YOUR_LICENSE_KEY
 ```
 
 ---
@@ -425,7 +425,6 @@ To rotate your API key:
 
 For enterprise inquiries:
 - **Email:** sales@ahanaai.com
-- **Phone:** +1 (808) 555-0123
 - **Schedule a Call:** [calendly.com/ahanaai-sales](https://calendly.com/ahanaai-sales)
 
 ---
