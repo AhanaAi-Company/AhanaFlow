@@ -108,6 +108,7 @@ the customer entitlement.
 ```bash
 # Add to ~/.bashrc or ~/.zshrc
 export AHANAFLOW_LICENSE_KEY="YOUR_AHANAFLOW_LICENSE_KEY"
+# AHANAFLOW_API_KEY is a deprecated alias for the same value.
 
 # Reload shell
 source ~/.bashrc
@@ -182,10 +183,20 @@ api:
 **Python:**
 
 ```python
-import os
 from backend.state_engine import CompressedStateEngine
 
+# Option A: Pass directly to engine
+engine = CompressedStateEngine(
+    "app.wal",
+    license_key="YOUR_AHANAFLOW_LICENSE_KEY",
+    durability_mode="safe"
+)
+
+# Option B: Set via environment before importing
+import os
 os.environ["AHANAFLOW_LICENSE_KEY"] = "YOUR_AHANAFLOW_LICENSE_KEY"
+
+# Then use normally
 engine = CompressedStateEngine("app.wal", durability_mode="safe")
 ```
 
@@ -205,7 +216,8 @@ const client = new AhanaFlowClient({
 
 ```bash
 export AHANAFLOW_LICENSE_KEY="YOUR_AHANAFLOW_LICENSE_KEY"
-python -m backend.universal_server.cli serve --wal ./data/universal_server.wal --host 127.0.0.1 --port 9633
+# AHANAFLOW_API_KEY is a deprecated alias for the same value.
+python -m backend.universal_server.cli serve --port 9633 --wal ./universal_server.wal
 ```
 
 ---
@@ -382,11 +394,11 @@ try:
     print('✓ Pro codec available')
 except ImportError:
     print('✗ Pro codec not installed')
-    print('  Install with: install the licensed pro binary from the commercial artifact portal')
+    print('  Pro codec is not on PyPI; retrieve it through the license portal')
 "
 ```
 
-**Note:** The Pro codec (`ahanaflow-pro`) is automatically installed when you configure a valid API key and restart the server.
+**Note:** The Pro codec is distributed through the license portal, not PyPI. Set `AHANAFLOW_LICENSE_KEY` (deprecated alias: `AHANAFLOW_API_KEY`) before starting the server.
 
 ### Key Rotation
 

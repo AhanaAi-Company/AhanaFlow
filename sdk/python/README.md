@@ -6,16 +6,9 @@
 
 ## Install
 
-From the repository root (the package is not on a public index):
-
 ```bash
-pip install -e ./sdk/python
-```
-
-Or from this directory:
-
-```bash
-pip install -e .
+# Not published to PyPI yet. From the repository root:
+pip install -e ./sdk
 ```
 
 Requires Python 3.11+. No external dependencies — pure stdlib.

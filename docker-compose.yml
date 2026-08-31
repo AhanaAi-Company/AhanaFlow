@@ -1,17 +1,16 @@
-# AhanaFlow local baseline
-# Single-node (builds the in-repo Dockerfile, which starts backend servers):
-#   docker compose --profile single-node up -d --build
+# AhanaFlow single-node baseline
+#   docker compose --profile single-node up -d
 #
-# This repo does not ship v1_1/, k8s/, reports/, or deploy/secrets/.
-# Mount runtime secrets from your secret manager if you use sealed-policy auth.
-# Do not commit live keys.
+# Uses Dockerfile CMD (/app/run_servers.sh) which starts the in-tree CLIs:
+#   python -m backend.universal_server.cli serve --wal ... --host ... --port ...
+#   python -m backend.universal_server.cli serve-vector-v2 --wal ... --host ... --port ...
+# This public tree does not ship k8s/, v1_1/, or deploy/secrets/.
 
 services:
   single-node:
     profiles: ["single-node"]
     build: .
-    image: ahanaflow:local
-    working_dir: /app
+    image: ahana-event-streams:branch-33-controlled-deployment-v1.0
     ports:
       - "9633:9633"
       - "9644:9644"

@@ -6,11 +6,11 @@
 #
 #   1. Pro binary  (ahana_codec installed):
 #      Trained 65 KB dictionary — ~88.7% footprint reduction on event payloads.
-#      Install: pip install ahanaflow-pro  (licensed binary, no source)
+#      Distributed through the license portal, not PyPI.
 #
 #   2. Community  (ahana_codec absent, zstandard present):
 #      Plain zstd level-1 — ~50-60% footprint reduction.
-#      Install: pip install ahanaflow  (open-source, fully functional)
+#      Client SDK: pip install -e ./sdk  (this tree; not published to PyPI yet)
 #
 #   3. Last resort  (neither present):
 #      gzip level-6 fallback — always available.

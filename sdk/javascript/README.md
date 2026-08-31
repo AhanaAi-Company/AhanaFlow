@@ -6,12 +6,8 @@
 
 ## Install
 
-From the repository root (not on a public index):
-
 ```bash
 npm install ./sdk/javascript
-# or
-yarn add ./sdk/javascript
 ```
 
 Requires Node.js 18+. Zero external dependencies — uses built-in `net` module only.

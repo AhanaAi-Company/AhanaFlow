@@ -3,14 +3,8 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-
-# Canonical commercial-license env name. Older names remain as aliases.
-LICENSE_KEY_ENV_NAMES = (
-    "AHANAFLOW_LICENSE_KEY",
-    "LICENSE_KEY",
-    "AHANAFLOW_API_KEY",
-    "API_KEY",
-)
+LICENSE_KEY_ENV = "AHANAFLOW_LICENSE_KEY"
+LICENSE_KEY_DEPRECATED_ALIAS = "AHANAFLOW_API_KEY"
 
 
 def read_secret(name: str, default: str = "") -> str:
@@ -36,9 +30,15 @@ def secret_is_configured(name: str) -> bool:
 
 
 def read_license_key(default: str = "") -> str:
-    """Return the commercial license key from the canonical env name or aliases."""
-    for name in LICENSE_KEY_ENV_NAMES:
-        value = read_secret(name)
-        if value:
-            return value
+    """Read the commercial license JWT.
+
+    Canonical env: ``AHANAFLOW_LICENSE_KEY`` (or ``AHANAFLOW_LICENSE_KEY_FILE``).
+    ``AHANAFLOW_API_KEY`` is a deprecated alias for older shells.
+    """
+    value = read_secret(LICENSE_KEY_ENV)
+    if value:
+        return value
+    value = read_secret(LICENSE_KEY_DEPRECATED_ALIAS)
+    if value:
+        return value
     return default

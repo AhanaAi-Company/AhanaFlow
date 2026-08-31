@@ -16,7 +16,19 @@ from .security import SecurityConfig
 from backend.vector_server import VectorStateServerV2
 
 
+def _announce_license() -> str:
+    license_key = read_license_key()
+    if license_key:
+        print("License: AHANAFLOW_LICENSE_KEY configured")
+    else:
+        print("License: not set (community tier)")
+    return license_key
+
+
 def _build_security_config(api_keys_file: str | None) -> SecurityConfig | None:
+    # Load the commercial license JWT so export AHANAFLOW_LICENSE_KEY is consumed
+    # at process start (AHANAFLOW_API_KEY remains a deprecated alias in the reader).
+    _announce_license()
     resolved = (
         api_keys_file
         or os.environ.get("AHANAFLOW_API_KEYS_FILE")
@@ -78,7 +90,6 @@ def main() -> int:
     args = parser.parse_args()
 
     if args.command == "serve":
-        read_license_key()
         signal.signal(signal.SIGTERM, signal.default_int_handler)
         server_class = AsyncUniversalStateServer if args.runtime == "async" else UniversalStateServer
         server_kwargs = {
@@ -105,7 +116,6 @@ def main() -> int:
         return 0
 
     if args.command == "serve-vector-v2":
-        read_license_key()
         signal.signal(signal.SIGTERM, signal.default_int_handler)
         server = VectorStateServerV2(
             Path(args.wal),

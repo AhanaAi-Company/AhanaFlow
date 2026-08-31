@@ -9,7 +9,7 @@
 [![License: Dual](https://img.shields.io/badge/license-Dual%20(Non--Commercial%20%2F%20Commercial)-blue)](./LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Performance](https://img.shields.io/badge/performance-47.6k%20req%2Fs%20mixed%20load%20%7C%2046.20ms%20vector%20p99-green)](./docs/PRODUCTION_READINESS_REPORT.md)
-[![Compression](https://img.shields.io/badge/compression-88.7%25-orange)](./docs/COMPRESSION.md)
+[![Compression](https://img.shields.io/badge/compression-88.7%25-orange)](./docs/PRODUCTION_READINESS_REPORT.md)
 
 [Website](https://www.ahanaflow.com) • [Documentation](./docs/) • [API Plans](https://www.ahanaflow.com/#pricing) • [Quick Start](#quick-start)
 
@@ -61,38 +61,30 @@ Canonical buyer-facing docs in this repo:
 
 ## Quick Start
 
-This repository is the install source.
+The ahanaflow Python and JavaScript SDKs are not published to package indexes yet.
 
-The client package is not published to a public index; install from this tree.
-
-Clone the repo, create a venv, then install the in-repo Python SDK:
-
+**Single-node compose** (Dockerfile CMD):
 ```bash
-git clone https://github.com/AhanaAi-Company/AhanaFlow.git
-cd AhanaFlow
-
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e ./sdk/python
-# Node SDK lives in sdk/javascript
+docker compose --profile single-node up -d
 ```
 
-Start the servers that exist in this tree:
-
+**In-tree CLI** (no Docker):
 ```bash
-mkdir -p data
-python -m backend.universal_server.cli serve --wal ./data/universal_server.wal --host 127.0.0.1 --port 9633
-# second terminal:
-python -m backend.universal_server.cli serve-vector-v2 --wal ./data/vector_server.wal --host 127.0.0.1 --port 9644
+python -m backend.universal_server.cli serve --wal ./universal_server.wal --host 127.0.0.1 --port 9633
+python -m backend.universal_server.cli serve-vector-v2 --wal ./vector_server.wal --host 127.0.0.1 --port 9644
 ```
 
-Or build the in-repo image:
-
+**SDKs from this checkout:**
 ```bash
-docker compose --profile single-node up -d --build
+pip install -e ./sdk
+npm install ./sdk/javascript
 ```
 
-Commercial deploys: set AHANAFLOW_LICENSE_KEY in the environment. Do not commit live keys, signing material, or sealed policy files.
+Commercial license (optional):
+```bash
+export AHANAFLOW_LICENSE_KEY="your_license_key_here"
+# AHANAFLOW_API_KEY is a deprecated alias for the same value.
+```
 
 Smoke-test state plus vector in one script:
 ```python
@@ -169,10 +161,7 @@ echo '{"cmd":"PING"}' | nc localhost 9633
 
 ### Kubernetes
 
-This repository does not ship a k8s/ tree. Use Docker Compose for local/pilot deploys, or copy the example YAML in docs/DEPLOYMENT_GUIDE.md into your own cluster manifests.
-
-
-See [docs/DEPLOYMENT_GUIDE.md](./docs/DEPLOYMENT_GUIDE.md) for complete deployment instructions.
+This public tree does not ship a k8s/ directory. Use the inline sample in docs/DEPLOYMENT_GUIDE.md if you need a starting manifest.
 
 ---
 
@@ -202,11 +191,23 @@ See [docs/DEPLOYMENT_GUIDE.md](./docs/DEPLOYMENT_GUIDE.md) for complete deployme
 
 1. Visit [www.ahanaflow.com](https://www.ahanaflow.com)
 2. Click "Get API Key" and choose your plan
-3. Add the license key to the server environment (canonical name AHANAFLOW_LICENSE_KEY):
+3. Add your API key to your deployment:
+
+```python
+# Configure your API key
+engine = CompressedStateEngine(
+    "app.wal",
+    license_key="your_license_key_here",  # Unlocks Pro compression when the licensed codec is present
+    durability_mode="safe"
+)
+```
+
+Or set via environment variable:
 
 ```bash
-export AHANAFLOW_LICENSE_KEY="YOUR_AHANAFLOW_LICENSE_KEY"
-python -m backend.universal_server.cli serve --wal ./data/universal_server.wal --host 127.0.0.1 --port 9633
+export AHANAFLOW_LICENSE_KEY="your_license_key_here"
+# AHANAFLOW_API_KEY is a deprecated alias.
+python -m backend.universal_server.cli serve
 ```
 
 For production, prefer `*_FILE` runtime secrets and a sealed policy file over plaintext env vars. The customer/admin surfaces now support `AHANAFLOW_ADMIN_API_KEY_FILE`, `AHANAFLOW_SERVICE_API_KEY_FILE`, `AHANAFLOW_SEALED_POLICY_KEY_FILE`, `STRIPE_SECRET_KEY_FILE`, `STRIPE_WEBHOOK_SECRET_FILE`, and `AHANAFLOW_SIGNING_KEY_FILE`.
@@ -262,7 +263,7 @@ pipe.incr("counter")
 results = pipe.execute()
 ```
 
-See [docs/BENCHMARKS.md](./docs/BENCHMARKS.md) for detailed performance analysis.
+See [docs/PRODUCTION_READINESS_REPORT.md](./docs/PRODUCTION_READINESS_REPORT.md) for detailed performance analysis.
 
 ---
 
@@ -314,12 +315,12 @@ See [docs/BENCHMARKS.md](./docs/BENCHMARKS.md) for detailed performance analysis
 
 ## Documentation
 
-- [Deployment Guide](./docs/DEPLOYMENT_GUIDE.md) — Docker, Kubernetes, systemd
+- [Deployment Guide](./docs/DEPLOYMENT_GUIDE.md) — Docker, systemd, inline Kubernetes sample
 - [API Key Setup](./docs/API_KEY_SETUP.md) — How to configure commercial licenses
-- [API Reference](./docs/API_REFERENCE.md) — Complete command documentation  
-- [Benchmarks](./docs/BENCHMARKS.md) — Performance analysis and comparison
-- [Architecture](./docs/ARCHITECTURE.md) — Internal design and WAL format
-- [Compression Guide](./docs/COMPRESSION.md) — How ACP compression works
+- [Production Readiness Report](./docs/PRODUCTION_READINESS_REPORT.md) — Current public claim boundary
+- [Vector Claim Boundary](./docs/VECTOR_STATE_SERVER_V2_CLAIM_BOUNDARY.md) — Approved vector lane wording
+- [Secret Rotation Runbook](./docs/SECRET_ROTATION_RUNBOOK.md) — Runtime secret mounts and rotation
+- [Deploy Helper Release Note](./docs/RELEASE_NOTE_DEPLOY_HELPER_2026-04-17.md) — Local deploy-helper formatter
 
 ---
 
@@ -330,8 +331,6 @@ See [examples/](./examples/) for complete working examples:
 - [Rate Limiter](./examples/rate_limiter.py) — Token bucket using INCR
 - [Job Queue](./examples/job_queue.py) — Background task processing with ENQUEUE/DEQUEUE
 - [Session Store](./examples/session_store.py) — User session management with TTL
-- [Event Log](./examples/event_log.py) — Audit trail with APPEND_EVENT
-- [RAG Memory](./examples/rag_memory.py) — Vector similarity search for LLM context
 
 ---
 
