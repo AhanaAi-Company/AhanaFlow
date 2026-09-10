@@ -151,16 +151,16 @@
           <div class="step">
             <div class="step-num">1</div>
             <p>Add to your server environment:<br>
-               <code>export AHANAFLOW_LICENSE_KEY="&lt;key&gt;"</code></p>
+               <code>export AHANAFLOW_LICENSE_KEY="&lt;key&gt;"</code><br>
+               <code>AHANAFLOW_API_KEY</code> is a deprecated alias.</p>
           </div>
           <div class="step">
             <div class="step-num">2</div>
-            <p>Restart AhanaFlow (UniversalStateServer / VectorStateServerV2)</p>
+            <p>Restart AhanaFlow</p>
           </div>
           <div class="step">
             <div class="step-num">3</div>
-            <p>Verify: <code>python -c "from state_engine.codec import active_tier; print(active_tier())"</code><br>
-               Should print: <code>pro</code></p>
+            <p>Verify with the public <a href="https://github.com/AhanaAi-Company/AhanaFlow/blob/main/docs/API_KEY_SETUP.md">API key setup guide</a>.</p>
           </div>
         </div>
 

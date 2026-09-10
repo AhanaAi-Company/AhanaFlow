@@ -34,6 +34,7 @@ class SecurityConfig:
     api_keys_file: str | Path | None = None  # Path to API keys file (one SHA-256 hash per line)
     sealed_policy_file: str | Path | None = None  # Encrypted JSON policy containing hashed API keys
     sealed_policy_key: str | None = None  # Fernet key used to decrypt sealed_policy_file
+    license_key: str | None = None  # AHANAFLOW_LICENSE_KEY from the license portal
     require_auth: bool = True  # If False, auth is optional (dev mode)
 
     # Rate limiting (operations per second)
@@ -106,6 +107,9 @@ class SecurityMiddleware:
             self._load_sealed_policy(self.config.sealed_policy_file, self.config.sealed_policy_key)
         elif self.config.api_keys_file:
             self._load_api_keys(self.config.api_keys_file)
+
+        if self.config.license_key:
+            self._api_keys.add(hash_api_key(self.config.license_key))
 
         # Open audit log
         if self.config.audit_log_path:

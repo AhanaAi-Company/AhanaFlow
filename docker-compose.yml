@@ -1,72 +1,31 @@
-# AhanaFlow controlled-deployment baseline
-# Single-node:
+# AhanaFlow single-node.
+# This public tree does not include k8s/, reports/, v1_1/, or deploy/secrets/.
+#
 #   docker compose --profile single-node up -d
-# HA pilot:
-#   docker compose --profile ha-pilot up -d
-# This file is intentionally bounded to single-node installs and controlled multi-node pilots.
-
+#
+# Uses the Dockerfile CMD, which starts the in-tree CLIs:
+#   python -m backend.universal_server.cli serve
+#   python -m backend.universal_server.cli serve-vector-v2
+#
 services:
-  # Single-node USS + VSS path for immediate local deployment.
   single-node:
     profiles: ["single-node"]
     build: .
     image: ahana-event-streams:branch-33-controlled-deployment-v1.0
     working_dir: /app
-    command: ["python", "-m", "v1_1.starter.start", "dev", "--no-webhook", "--uss-port", "9633", "--vss-port", "9644", "--uss-wal", "/data/universal_server.wal", "--vss-wal", "/data/vector_server.wal"]
     ports:
       - "9633:9633"
       - "9644:9644"
     volumes:
       - single_node_data:/data
-      - ./deploy/secrets:/run/secrets/ahanaflow:ro
     environment:
-      AHANAFLOW_SEALED_POLICY_FILE: /run/secrets/ahanaflow/security.policy
-      AHANAFLOW_SEALED_POLICY_KEY_FILE: /run/secrets/ahanaflow/sealed_policy_key
-    restart: unless-stopped
-
-  # Leader + follower pilot with VSS enabled on both nodes for bounded multi-node validation.
-  ha-leader:
-    profiles: ["ha-pilot"]
-    build: .
-    image: ahana-event-streams:branch-33-controlled-deployment-v1.0
-    working_dir: /app
-    command: ["python", "-m", "v1_1.starter.start", "ha-leader", "--no-webhook", "--uss-port", "9633", "--vss-port", "9644", "--leader-proxy-port", "9634", "--repl-port", "9635", "--sentinel-port", "9636", "--metrics-port", "9100", "--uss-wal", "/data/universal_server.wal", "--vss-wal", "/data/vector_server.wal", "--follower-hosts", "ha-follower:9634"]
-    ports:
-      - "9633:9633"
-      - "9634:9634"
-      - "9635:9635"
-      - "9636:9636"
-      - "9644:9644"
-      - "9100:9100"
-    volumes:
-      - ha_leader_data:/data
-      - ./deploy/secrets:/run/secrets/ahanaflow:ro
-    environment:
-      AHANAFLOW_SEALED_POLICY_FILE: /run/secrets/ahanaflow/security.policy
-      AHANAFLOW_SEALED_POLICY_KEY_FILE: /run/secrets/ahanaflow/sealed_policy_key
-    restart: unless-stopped
-
-  ha-follower:
-    profiles: ["ha-pilot"]
-    build: .
-    image: ahana-event-streams:branch-33-controlled-deployment-v1.0
-    working_dir: /app
-    command: ["python", "-m", "v1_1.starter.start", "ha-follower", "--leader-host", "ha-leader", "--repl-port", "9635", "--uss-port", "9633", "--vss-port", "9644", "--metrics-port", "9100", "--enable-vss", "--uss-wal", "/data/universal_server.wal", "--vss-wal", "/data/vector_server.wal"]
-    depends_on:
-      - ha-leader
-    ports:
-      - "9733:9633"
-      - "9744:9644"
-      - "9710:9100"
-    volumes:
-      - ha_follower_data:/data
-      - ./deploy/secrets:/run/secrets/ahanaflow:ro
-    environment:
-      AHANAFLOW_SEALED_POLICY_FILE: /run/secrets/ahanaflow/security.policy
-      AHANAFLOW_SEALED_POLICY_KEY_FILE: /run/secrets/ahanaflow/sealed_policy_key
+      UNIVERSAL_HOST: "0.0.0.0"
+      UNIVERSAL_PORT: "9633"
+      UNIVERSAL_WAL: "/data/universal_server.wal"
+      VECTOR_HOST: "0.0.0.0"
+      VECTOR_PORT: "9644"
+      VECTOR_WAL: "/data/vector_server.wal"
     restart: unless-stopped
 
 volumes:
   single_node_data:
-  ha_leader_data:
-  ha_follower_data:

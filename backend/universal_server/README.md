@@ -51,7 +51,7 @@ Example commands:
 From this branch directory:
 
 ```bash
-python -m universal_server.cli serve --wal ./tmp_universal.wal --host 127.0.0.1 --port 9633 --durability-mode fast
+python -m backend.universal_server.cli serve --wal ./tmp_universal.wal --host 127.0.0.1 --port 9633 --durability-mode fast
 ```
 
 Use `--durability-mode strict` when validating crash-recovery persistence.
@@ -61,7 +61,7 @@ Use `--durability-mode strict` when validating crash-recovery persistence.
 Run the durability-aware local benchmark against a SQLite baseline:
 
 ```bash
-python -m universal_server.cli benchmark --iterations 20000
+python -m backend.universal_server.cli benchmark --iterations 20000
 ```
 
 This benchmark reports:

@@ -63,8 +63,8 @@ python -m pytest tests/ --cov=backend --cov-report=html
 
 ```bash
 # Clone the repo
-git clone https://github.com/AhanaAI-Company/ahanaflow.git
-cd ahanaflow
+git clone https://github.com/AhanaAi-Company/AhanaFlow.git
+cd AhanaFlow
 
 # Create virtual environment
 python -m venv venv
@@ -72,10 +72,7 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
-pip install -r requirements-dev.txt
-
-# Install in editable mode
-pip install -e .
+pip install -e ./sdk/python
 
 # Run tests
 pytest tests/ -v

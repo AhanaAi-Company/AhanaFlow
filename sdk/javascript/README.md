@@ -6,10 +6,11 @@
 
 ## Install
 
+The JavaScript SDK is not published to npm. Install from this repository:
+
 ```bash
-npm install ahanaflow
-# or
-yarn add ahanaflow
+# from repo root
+npm install ./sdk/javascript
 ```
 
 Requires Node.js 18+. Zero external dependencies — uses built-in `net` module only.

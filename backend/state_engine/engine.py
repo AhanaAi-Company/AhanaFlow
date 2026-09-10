@@ -12,6 +12,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from backend.common import read_license_key
+
 from .codec import compress as _compress, decompress as _decompress
 
 # orjson is a Rust-compiled drop-in for json — 3-5× faster for small dicts.
@@ -128,6 +130,8 @@ class CompressedStateEngine:
         fast_batch_size: int | None = None,
         fast_flush_interval_ms: int | float | None = None,
         no_compress_threshold: int | None = None,
+        license_key: str | None = None,
+        api_key: str | None = None,
     ) -> None:
         """Initialise the engine.
 
@@ -155,6 +159,9 @@ class CompressedStateEngine:
             raise ValueError(
                 f"durability_mode must be 'safe', 'fast', or 'strict'; got {durability_mode!r}"
             )
+        # Canonical commercial license: AHANAFLOW_LICENSE_KEY.
+        # api_key / AHANAFLOW_API_KEY remain a deprecated alias.
+        self._license_key = (license_key or api_key or read_license_key() or "").strip()
         self._wal_path = Path(wal_path)
         self._wal_path.parent.mkdir(parents=True, exist_ok=True)
         self._rwlock = _ReadWriteLock()

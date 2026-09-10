@@ -25,12 +25,14 @@ def _build_security_config(api_keys_file: str | None) -> SecurityConfig | None:
     ).strip()
     sealed_policy_file = os.environ.get("AHANAFLOW_SEALED_POLICY_FILE", "").strip()
     sealed_policy_key = read_secret("AHANAFLOW_SEALED_POLICY_KEY")
-    if not resolved and not sealed_policy_file:
+    license_key = read_secret("AHANAFLOW_LICENSE_KEY")
+    if not resolved and not sealed_policy_file and not license_key:
         return None
     return SecurityConfig(
         api_keys_file=resolved or None,
         sealed_policy_file=sealed_policy_file or None,
         sealed_policy_key=sealed_policy_key or None,
+        license_key=license_key or None,
         require_auth=True,
     )
 

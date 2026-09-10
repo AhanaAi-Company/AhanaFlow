@@ -41,22 +41,23 @@ Complete guide for deploying AhanaFlow in various environments.
 
 ## Installation Methods
 
-### Method 1: pip Install (Simplest)
+### Method 1: From this repository
+
+The Python SDK is not on PyPI. Clone this repo, then install the in-tree SDK:
 
 ```bash
-# Community Edition (free for non-commercial use)
-pip install ahanaflow
-
-# Verify installation
-python -c "from backend.state_engine import CompressedStateEngine; print('✓ AhanaFlow installed')"
+git clone https://github.com/AhanaAi-Company/AhanaFlow.git
+cd AhanaFlow
+pip install -e ./sdk
+PYTHONPATH=. python -m backend.universal_server.cli serve --help
 ```
 
 ### Method 2: From Source
 
 ```bash
 # Clone the repository
-git clone https://github.com/AhanaAI-Company/ahanaflow.git
-cd ahanaflow
+git clone https://github.com/AhanaAi-Company/AhanaFlow.git
+cd AhanaFlow
 
 # Create virtual environment
 python -m venv venv
@@ -66,7 +67,7 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
 # Install in editable mode
-pip install -e .
+pip install -e ./sdk
 
 # Run tests
 python -m pytest tests/ -v
@@ -93,7 +94,7 @@ Create a `.env` file in your project root:
 
 ```bash
 # API Key (for commercial deployments)
-AHANAFLOW_API_KEY=your_api_key_here
+AHANAFLOW_LICENSE_KEY=your_api_key_here
 
 # Server Configuration
 AHANAFLOW_HOST=0.0.0.0
@@ -144,7 +145,7 @@ security:
   auth_token: null
 
 api:
-  key: null  # Set via AHANAFLOW_API_KEY environment variable
+  key: null  # Set via AHANAFLOW_LICENSE_KEY environment variable
 
 logging:
   level: INFO
@@ -195,7 +196,7 @@ docker run -d \
   -p 9633:9633 \
   -p 9644:9644 \
   -v ~/ahanaflow-data:/data \
-  -e AHANAFLOW_API_KEY=your_api_key_here \
+  -e AHANAFLOW_LICENSE_KEY=your_api_key_here \
   -e AHANAFLOW_DURABILITY_MODE=safe \
   ghcr.io/ahanaai-company/ahanaflow:latest
 
@@ -223,7 +224,7 @@ services:
     volumes:
       - ./data:/data
     environment:
-      - AHANAFLOW_API_KEY=${AHANAFLOW_API_KEY}
+      - AHANAFLOW_LICENSE_KEY=${AHANAFLOW_LICENSE_KEY}
       - AHANAFLOW_DURABILITY_MODE=safe
       - AHANAFLOW_LOG_LEVEL=INFO
     restart: unless-stopped
@@ -263,7 +264,8 @@ kubectl create secret generic ahanaflow-api-key \
   -n ahanaflow
 
 # Apply deployment
-kubectl apply -f k8s/ahanaflow-deployment.yaml
+# this tree has no k8s/; save the inline YAML below, then:
+kubectl apply -f ahanaflow-deployment.yaml
 
 # Verify deployment
 kubectl get pods -n ahanaflow
@@ -272,7 +274,7 @@ kubectl logs -f -n ahanaflow -l app=ahanaflow
 
 **Kubernetes Deployment YAML:**
 
-Create `k8s/ahanaflow-deployment.yaml`:
+This tree has no `k8s/` directory. Save the inline YAML below to a local file (for example `ahanaflow-deployment.yaml`), then apply that file:
 
 ```yaml
 apiVersion: v1
@@ -312,7 +314,7 @@ spec:
         - containerPort: 9644
           name: vector
         env:
-        - name: AHANAFLOW_API_KEY
+        - name: AHANAFLOW_LICENSE_KEY
           valueFrom:
             secretKeyRef:
               name: ahanaflow-api-key
@@ -392,7 +394,7 @@ Type=simple
 User=ahanaflow
 Group=ahanaflow
 WorkingDirectory=/opt/ahanaflow
-Environment="AHANAFLOW_API_KEY=your_api_key_here"
+Environment="AHANAFLOW_LICENSE_KEY=your_api_key_here"
 Environment="AHANAFLOW_DURABILITY_MODE=safe"
 ExecStart=/opt/ahanaflow/venv/bin/python -m backend.universal_server.cli serve --port 9633 --host 0.0.0.0
 Restart=on-failure
@@ -414,7 +416,7 @@ sudo chown ahanaflow:ahanaflow /opt/ahanaflow/data
 
 # Install AhanaFlow
 sudo -u ahanaflow python -m venv /opt/ahanaflow/venv
-sudo -u ahanaflow /opt/ahanaflow/venv/bin/pip install ahanaflow
+sudo -u ahanaflow /opt/ahanaflow/venv/bin/pip install -e /opt/ahanaflow/sdk
 
 # Enable service
 sudo systemctl daemon-reload
@@ -708,7 +710,7 @@ tail -f /data/ahanaflow.log
 ### Getting Help
 
 - **Documentation:** https://www.ahanaflow.com/docs
-- **GitHub Issues:** https://github.com/AhanaAI-Company/ahanaflow/issues
+- **GitHub Issues:** https://github.com/AhanaAi-Company/AhanaFlow/issues
 - **Email Support:** support@ahanaai.com (paid plans only)
 - **Community Discord:** https://discord.gg/ahanaai (coming soon)
 
@@ -717,9 +719,9 @@ tail -f /data/ahanaflow.log
 ## Next Steps
 
 1. **[API Key Setup](./API_KEY_SETUP.md)** — Configure commercial license
-2. **[API Reference](./API_REFERENCE.md)** — Complete command documentation
+2. **[Production Readiness Report](./PRODUCTION_READINESS_REPORT.md)** — Public benchmark boundary
 3. **[Examples](../examples/)** — Working code samples
-4. **[Benchmarks](./BENCHMARKS.md)** — Performance tuning guide
+4. **[Secret Rotation Runbook](./SECRET_ROTATION_RUNBOOK.md)** — Runtime secret mounts
 
 ---
 

@@ -76,7 +76,7 @@ Go to **[www.ahanaflow.com](https://www.ahanaflow.com)** and click **"Get API Ke
 
 ```bash
 # Example API key format
-ahanaflow_live_5k8j2n9f1x6c4d8e7g3h2m1p9q7r4s6t8v2w5y1z3
+YOUR_AHANAFLOW_LICENSE_KEY
 ```
 
 **Security Best Practices:**
@@ -107,30 +107,30 @@ the customer entitlement.
 
 ```bash
 # Add to ~/.bashrc or ~/.zshrc
-export AHANAFLOW_API_KEY="ahanaflow_live_5k8j2n9f1x6c4d8e7g3h2m1p9q7r4s6t8v2w5y1z3"
+export AHANAFLOW_LICENSE_KEY="YOUR_AHANAFLOW_LICENSE_KEY"
 
 # Reload shell
 source ~/.bashrc
 
 # Verify
-echo $AHANAFLOW_API_KEY
+echo $AHANAFLOW_LICENSE_KEY
 ```
 
 **Windows PowerShell:**
 
 ```powershell
 # Set permanently
-[System.Environment]::SetEnvironmentVariable("AHANAFLOW_API_KEY", "ahanaflow_live_5k8j2n9f1x6c4d8e7g3h2m1p9q7r4s6t8v2w5y1z3", "User")
+[System.Environment]::SetEnvironmentVariable("AHANAFLOW_LICENSE_KEY", "YOUR_AHANAFLOW_LICENSE_KEY", "User")
 
 # Verify
-$env:AHANAFLOW_API_KEY
+$env:AHANAFLOW_LICENSE_KEY
 ```
 
 **Docker:**
 
 ```bash
 docker run -d \
-  -e AHANAFLOW_API_KEY="ahanaflow_live_5k8j2n9f1x6c4d8e7g3h2m1p9q7r4s6t8v2w5y1z3" \
+  -e AHANAFLOW_LICENSE_KEY="YOUR_AHANAFLOW_LICENSE_KEY" \
   ghcr.io/ahanaai-company/ahanaflow:branch-33-controlled-deployment-v1.0
 ```
 
@@ -139,7 +139,7 @@ docker run -d \
 ```bash
 # Create secret
 kubectl create secret generic ahanaflow-api-key \
-  --from-literal=api-key=ahanaflow_live_5k8j2n9f1x6c4d8e7g3h2m1p9q7r4s6t8v2w5y1z3 \
+  --from-literal=api-key=YOUR_AHANAFLOW_LICENSE_KEY \
   -n your-namespace
 
 # Reference in deployment
@@ -153,72 +153,25 @@ spec:
       containers:
       - name: ahanaflow
         env:
-        - name: AHANAFLOW_API_KEY
+        - name: AHANAFLOW_LICENSE_KEY
           valueFrom:
             secretKeyRef:
               name: ahanaflow-api-key
               key: api-key
 ```
 
-### Method 2: Configuration File
+### Method 2: License key file
 
-Create `.ahanaflow.conf` in your project root:
+There is no `.ahanaflow.conf` reader, no `api_key=` argument on `CompressedStateEngine`, and no `--api-key` CLI flag.
 
-```ini
-[api]
-key = ahanaflow_live_5k8j2n9f1x6c4d8e7g3h2m1p9q7r4s6t8v2w5y1z3
-```
-
-Or use YAML format:
-
-```yaml
-# ahanaflow.yaml
-api:
-  key: ahanaflow_live_5k8j2n9f1x6c4d8e7g3h2m1p9q7r4s6t8v2w5y1z3
-```
-
-### Method 3: Programmatic Configuration
-
-**Python:**
-
-```python
-from backend.state_engine import CompressedStateEngine
-
-# Option A: Pass directly to engine
-engine = CompressedStateEngine(
-    "app.wal",
-    api_key="ahanaflow_live_5k8j2n9f1x6c4d8e7g3h2m1p9q7r4s6t8v2w5y1z3",
-    durability_mode="safe"
-)
-
-# Option B: Set via environment before importing
-import os
-os.environ["AHANAFLOW_API_KEY"] = "ahanaflow_live_5k8j2n9f1x6c4d8e7g3h2m1p9q7r4s6t8v2w5y1z3"
-
-# Then use normally
-engine = CompressedStateEngine("app.wal", durability_mode="safe")
-```
-
-**Node.js (Coming soon):**
-
-```javascript
-const { AhanaFlowClient } = require('ahanaflow');
-
-const client = new AhanaFlowClient({
-  apiKey: 'ahanaflow_live_5k8j2n9f1x6c4d8e7g3h2m1p9q7r4s6t8v2w5y1z3',
-  host: 'localhost',
-  port: 9633
-});
-```
-
-### Method 4: Server Startup Flag
+If you prefer not to put the key in the process environment, point the server at a file:
 
 ```bash
-# Start server with API key
-python -m backend.universal_server.cli serve \
-  --port 9633 \
-  --api-key ahanaflow_live_5k8j2n9f1x6c4d8e7g3h2m1p9q7r4s6t8v2w5y1z3
+export AHANAFLOW_LICENSE_KEY_FILE="/run/secrets/ahanaflow/license_key"
+python -m backend.universal_server.cli serve
 ```
+
+`AHANAFLOW_LICENSE_KEY` (or `AHANAFLOW_LICENSE_KEY_FILE`) authenticates clients to the TCP server. It does not download or install a Pro codec.
 
 ---
 
@@ -233,7 +186,7 @@ from backend.state_engine import CompressedStateEngine
 import os
 
 # Check if API key is set
-api_key = os.environ.get("AHANAFLOW_API_KEY")
+api_key = os.environ.get("AHANAFLOW_LICENSE_KEY")
 print(f"API Key configured: {'✓' if api_key else '✗'}")
 
 # Create engine and check compression
@@ -248,7 +201,7 @@ if compression_ratio > 0.80:
     print("✓ Using Pro-tier compression (88.7% trained dictionary)")
 else:
     print("⚠ Using Community-tier compression (50-60% baseline)")
-    print("  Ensure AHANAFLOW_API_KEY is set correctly")
+    print("  Ensure AHANAFLOW_LICENSE_KEY is set correctly")
 
 engine.close()
 os.remove("test.wal")  # Cleanup
@@ -371,7 +324,7 @@ Warning: API key not found, using community-tier compression
 ```
 
 **Solutions:**
-1. Ensure `AHANAFLOW_API_KEY` environment variable is set
+1. Ensure `AHANAFLOW_LICENSE_KEY` environment variable is set
 2. Check the variable is accessible to the process:
    ```bash
    printenv | grep AHANAFLOW
@@ -379,26 +332,11 @@ Warning: API key not found, using community-tier compression
 3. Restart the server after setting the environment variable
 4. Verify no typos in variable name (case-sensitive)
 
-### Still Using 50-60% Compression
+### License key vs Pro codec
 
-**Check your configuration:**
+`AHANAFLOW_LICENSE_KEY` authenticates clients to the TCP server. It does not download or install a Pro codec, and it does not change the on-disk community compression path by itself.
 
-```bash
-# Verify API key is set
-echo $AHANAFLOW_API_KEY
-
-# Check if Pro codec is installed
-python -c "
-try:
-  from ahana_codec import compress
-    print('✓ Pro codec available')
-except ImportError:
-    print('✗ Pro codec not installed')
-    print('  Install with: pip install ahanaflow-pro')
-"
-```
-
-**Note:** The Pro codec (`ahanaflow-pro`) is automatically installed when you configure a valid API key and restart the server.
+Commercial codec artifacts are issued through the license portal / backend manifest flow, not by installing a package from a public index.
 
 ### Key Rotation
 
@@ -417,7 +355,7 @@ To rotate your API key:
 ### Support Channels
 
 - **Documentation:** [www.ahanaflow.com/docs](https://www.ahanaflow.com/docs)
-- **GitHub Issues:** [Report bugs or request features](https://github.com/AhanaAI-Company/ahanaflow/issues)
+- **GitHub Issues:** [Report bugs or request features](https://github.com/AhanaAi-Company/AhanaFlow/issues)
 - **Email Support:** support@ahanaai.com (paid plans only)
 - **Status Page:** [status.ahanaflow.com](https://status.ahanaflow.com)
 
@@ -425,17 +363,16 @@ To rotate your API key:
 
 For enterprise inquiries:
 - **Email:** sales@ahanaai.com
-- **Phone:** +1 (808) 555-0123
 - **Schedule a Call:** [calendly.com/ahanaai-sales](https://calendly.com/ahanaai-sales)
 
 ---
 
 ## Next Steps
 
-1. **[Deployment Guide](./DEPLOYMENT_GUIDE.md)** — Deploy AhanaFlow with your API key
-2. **[API Reference](./API_REFERENCE.md)** — Complete command documentation
-3. **[Benchmarks](./BENCHMARKS.md)** — Measure your compression gains
-4. **[Examples](../examples/)** — Working code samples
+1. **[Deployment Guide](./DEPLOYMENT_GUIDE.md)** — Deploy AhanaFlow with your license key
+2. **[Production Readiness Report](./PRODUCTION_READINESS_REPORT.md)** — Public benchmark boundary
+3. **[Examples](../examples/)** — Working code samples
+4. **[Secret Rotation Runbook](./SECRET_ROTATION_RUNBOOK.md)** — Runtime secret mounts
 
 ---
 

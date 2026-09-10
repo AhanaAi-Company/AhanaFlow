@@ -6,8 +6,13 @@
 
 ## Install
 
+The Python SDK is not published to PyPI. Install from this repository:
+
 ```bash
-pip install ahanaflow
+# from repo root
+pip install -e ./sdk
+# ./sdk/python also works
+pip install -e ./sdk/python
 ```
 
 Requires Python 3.11+. No external dependencies — pure stdlib.
@@ -143,7 +148,7 @@ client.set_durability_mode("fast")   # no restart needed
 
 ```bash
 # Verified Branch 33 local CLI surface:
-python -m universal_server.cli serve \
+python -m backend.universal_server.cli serve \
     --wal ./state.wal \
     --host 127.0.0.1 \
     --port 9633
