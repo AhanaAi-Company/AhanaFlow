@@ -58,18 +58,16 @@ Visit **https://www.ahanaflow.com** to:
    - Deploy with community-edition compression (50-60% reduction)
    - No credit card required
 
-2. **API Plan** - For production deployments ($9.99-$49.99/month):
-   - Purchase an API key through the website
-   - Unlock Pro-tier compression (88.7% reduction with trained dictionary)
-   - Priority support and SLA guarantees
-   - Volume discounts available
+2. **Hosted plans** - Planned prices, checkout is not open:
+   - Pro: $9.99 / month
+   - Team: $19.99 / month
+   - Email sales@ahanaai.com
+   - A commercial license unlocks Pro-tier compression (88.7% with the trained dictionary)
 
-3. **Enterprise Plan** - For large-scale deployments (custom pricing):
-   - Contact sales@ahanaai.com
-   - On-premises deployment support
-   - Custom compression dictionaries trained on your data
-   - Dedicated support and architecture consultation
-   - Source code access available for security audits
+3. **Enterprise** - Email sales@ahanaai.com. No published monthly price.
+   - Self-host is not this plan. Self-host means you run this repository yourself.
+   - The community license covers non-commercial self-host use.
+   - Commercial use of a self-hosted copy still needs a commercial license.
 
 ### Benefits of Commercial License
 
@@ -105,8 +103,9 @@ AhanaAI Corporation reserves the right to:
 | Personal projects | Community (this file) | Free | 50-60% |
 | Academic research | Community (this file) | Free | 50-60% |
 | Commercial (≤10K req/mo) | Free API key | Free | 50-60% |
-| Commercial production | Paid API plan | $49-$499/mo | 88.7% |
-| Enterprise deployment | Enterprise license | Custom | 88.7%+ |
+| Self-host, non-commercial | Community (this file) | No monthly fee | 50-60% |
+| Commercial production | Pro or Team | $9.99 or $19.99/mo, planned | 88.7% |
+| Enterprise | Enterprise license | Email sales@ahanaai.com | 88.7%+ |
 
 ---
 

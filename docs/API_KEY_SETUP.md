@@ -51,13 +51,13 @@ Go to **[www.ahanaflow.com](https://www.ahanaflow.com)** and click **"Get API Ke
 
 ### Step 2: Choose Your Plan
 
-| Plan | Price | Best For |
-|------|-------|----------|
-| **Free** | $0/mo | Small projects (≤10K req/mo) |
-| **Starter** | $49/mo | Single service/pod (100K req/mo) |
-| **Professional** | $149/mo | Multiple services (1M req/mo) |
-| **Business** | $499/mo | Production scale (10M req/mo) |
-| **Enterprise** | Custom | On-prem, custom dictionaries, source access |
+| Plan | Price | Where it runs |
+|------|-------|----------------|
+| **Self-host** | No monthly fee | This repository on your machine. Community license is non-commercial. |
+| **Free commercial** | $0 | Small commercial use (≤10K req/mo) with a free API key |
+| **Pro** | $9.99/mo, planned | Hosted plan. Checkout is not open. |
+| **Team** | $19.99/mo, planned | Hosted plan. Checkout is not open. |
+| **Enterprise** | Email sales@ahanaai.com | Not a self-host fee. |
 
 ### Step 3: Complete Registration
 
@@ -66,11 +66,10 @@ Go to **[www.ahanaflow.com](https://www.ahanaflow.com)** and click **"Get API Ke
 2. Verify your email
 3. Receive your API key instantly
 
-**For Paid Plans:**
-1. Enter your email and payment details
-2. Complete checkout via Stripe
-3. Receive your API key via email within 5 minutes
-4. Download your license certificate (optional, for compliance)
+**For paid plans:**
+1. Checkout is not open.
+2. Email sales@ahanaai.com with the plan name (Pro or Team).
+3. A commercial license is required for commercial use, including a self-hosted copy.
 
 ### Step 4: Store Your API Key Securely
 
@@ -236,15 +235,11 @@ Monitor your usage at [www.ahanaflow.com/dashboard](https://www.ahanaflow.com/da
 
 ### Plan Comparison
 
-| Feature | Free | Starter | Professional | Business | Enterprise |
-|---------|------|---------|--------------|----------|------------|
-| **Requests/month** | 10K | 100K | 1M | 10M | Unlimited |
-| **Compression** | 50-60% | 88.7% | 88.7% | 88.7% | Custom 90%+ |
-| **Support** | Forums | Email | Priority Email | 24/7 Phone | Dedicated CSM |
-| **SLA** | None | 99.5% | 99.9% | 99.95% | 99.99% |
-| **Response Time** | N/A | <24h | <4h | <1h | <15min |
-| **Features** | Core | Core + Pro compression | + Multi-region | + HA replication | + Source access |
-| **Price** | $0 | $49/mo | $149/mo | $499/mo | Custom |
+| Feature | Self-host | Pro | Team | Enterprise |
+|---------|-----------|-----|------|------------|
+| **Where it runs** | Your machine | Planned hosted plan | Planned hosted plan | Ask |
+| **Compression** | 50-60% on the community license | 88.7% with a commercial license | 88.7% with a commercial license | Ask |
+| **Price** | No monthly fee | $9.99/mo, planned | $19.99/mo, planned | Email sales@ahanaai.com |
 
 ---
 
@@ -274,12 +269,7 @@ For current public performance positioning, use `docs/PRODUCTION_READINESS_REPOR
 
 ### 3. Support & SLA
 
-| Issue Type | Community | Starter | Professional | Business | Enterprise |
-|------------|-----------|---------|--------------|----------|------------|
-| Bug report | GitHub issue (no SLA) | Email <24h | Email <4h | Phone <1h | Slack <15min |
-| Production down | No support | <24h | <2h | <30min | Immediate |
-| Feature request | May be ignored | Considered | Prioritized | Fast-tracked | Custom dev |
-| Architecture review | None | None | 1× per quarter | Monthly | Weekly |
+Support hours are not published on the current plan page. Email sales@ahanaai.com for Pro, Team, or Enterprise. Non-commercial self-host questions stay on GitHub issues.
 
 ### 4. Legal Indemnification
 

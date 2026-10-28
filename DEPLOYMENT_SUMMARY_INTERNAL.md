@@ -105,11 +105,11 @@ Dockerfile                 # Container image build
 - Legal indemnification
 
 **Pricing:**
-- **Free tier:** ≤10K req/mo ($0)
-- **Starter:** 100K req/mo ($49/mo)
-- **Professional:** 1M req/mo ($149/mo)
-- **Business:** 10M req/mo ($499/mo)
-- **Enterprise:** Custom (unlimited, on-prem, source access)
+- **Self-host:** no monthly fee. Run this repository. Community license is non-commercial. Commercial use still needs a license.
+- **Free commercial key:** ≤10K req/mo ($0)
+- **Pro:** $9.99/mo, planned hosted plan. Checkout is not open.
+- **Team:** $19.99/mo, planned hosted plan. Checkout is not open.
+- **Enterprise:** email sales@ahanaai.com. Not a self-host fee.
 
 ---
 
@@ -203,10 +203,10 @@ Update www.ahanaflow.com to point to:
 - No credit card required
 - Community compression (50-60%)
 
-### Paid Tiers ($49+/mo)
+### Paid tiers (Pro $9.99/mo, Team $19.99/mo, planned)
 
-- User visits www.ahanaflow.com/pricing
-- Selects plan → checkout via Stripe
+- Checkout is not open.
+- Email sales@ahanaai.com.
 - Receives API key via email
 - Downloads binary wheel: `pip install ahanaflow-pro --extra-index-url https://api.ahanaflow.com/wheels/`
 - Unlocks 88.7% Pro compression

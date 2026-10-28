@@ -40,7 +40,7 @@ Use AhanaFlow when you want one runtime for retained state plus integrated vecto
 | **Compression** | 88.7% WAL reduction (Pro) | 4.9× smaller than uncompressed |
 | **Features** | KV + TTL + Queues + Streams + Vectors | KV only, no TTL/queues |
 | **Ops Complexity** | One runtime for state + vector packaging | Requires separate Redis server + AUTH/TLS |
-| **Cost** | $0–$499/mo for most use cases | $150–$400/mo for managed Redis |
+| **Cost** | Self-host has no monthly fee. Planned hosted plans are $9.99 and $19.99/mo | $150–$400/mo for managed Redis |
 
 ### Current Claim Boundary
 
@@ -159,32 +159,25 @@ See [docs/DEPLOYMENT_GUIDE.md](./docs/DEPLOYMENT_GUIDE.md) for complete deployme
 
 ---
 
-## Commercial Use & API Plans
+## Commercial use and self-host
 
-**AhanaFlow is free for non-commercial use.** For commercial deployment, use the current controlled-deployment proof packet and claim-boundary docs in this repo when reviewing fit.
+**Self-host means you run this repository on a machine you control.** It is not a monthly plan, and it is not the Enterprise product. The community license covers non-commercial use. Commercial use of a self-hosted copy still needs a commercial license.
 
-### Pricing Plans
+Planned hosted prices. Checkout is not open. The same numbers are on [ahanaflow.com](https://www.ahanaflow.com).
 
-| Plan | Price | Requests/Month | Compression | Support |
-|------|-------|----------------|-------------|---------|
-| **Free** | $0 | ≤10K | 50-60% (community) | Community forums |
-| **Starter** | $49/mo | 100K | 88.7% (Pro dictionary) | Email support |
-| **Professional** | $149/mo | 1M | 88.7% (Pro dictionary) | Priority support + SLA |
-| **Business** | $499/mo | 10M | 88.7% (Pro dictionary) | 24/7 support + dedicated CSM |
-| **Enterprise** | Custom | Unlimited | Custom dictionaries | On-prem + source access |
+| Plan | Price | Where it runs |
+|------|-------|----------------|
+| **Self-host** | No monthly fee | Your machine. This repository. |
+| **Pro** | $9.99 / month | Planned hosted plan |
+| **Team** | $19.99 / month | Planned hosted plan |
+| **Enterprise** | Email [sales@ahanaai.com](mailto:sales@ahanaai.com) | Ask. Not a self-host fee. |
 
-### Why Upgrade?
+Community compression on the non-commercial license is 50-60%. A commercial license is what unlocks the Pro dictionary (88.7%).
 
-✅ **88.7% compression** with trained dictionaries (vs 50-60% community)  
-✅ 5× smaller WAL files = lower storage costs + faster backups  
-✅ Production SLA with 99.9% uptime guarantee  
-✅ Priority support with <4 hour response time  
-✅ Legal indemnification for commercial deployment  
+### Get a commercial license
 
-### Get Your API Key
-
-1. Visit [www.ahanaflow.com](https://www.ahanaflow.com)
-2. Click "Get API Key" and choose your plan
+1. Read the prices on [www.ahanaflow.com](https://www.ahanaflow.com).
+2. Email [sales@ahanaai.com](mailto:sales@ahanaai.com). Checkout is not open.
 3. Authenticate the TCP server with your license key (`CompressedStateEngine` does not take `api_key=`):
 
 ```bash
