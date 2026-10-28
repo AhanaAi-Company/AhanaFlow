@@ -109,7 +109,7 @@ Dockerfile                 # Container image build
 - **Free commercial key:** ≤10K req/mo ($0)
 - **Pro:** $9.99/mo, planned hosted plan. Checkout is not open.
 - **Team:** $19.99/mo, planned hosted plan. Checkout is not open.
-- **Enterprise:** email sales@ahanaai.com. Not a self-host fee.
+- **Enterprise:** email jeremiah@AhanaAi.com. Not a self-host fee.
 
 ---
 
@@ -206,7 +206,7 @@ Update www.ahanaflow.com to point to:
 ### Paid tiers (Pro $9.99/mo, Team $19.99/mo, planned)
 
 - Checkout is not open.
-- Email sales@ahanaai.com.
+- Email jeremiah@AhanaAi.com.
 - Receives API key via email
 - Downloads binary wheel: `pip install ahanaflow-pro --extra-index-url https://api.ahanaflow.com/wheels/`
 - Unlocks 88.7% Pro compression
@@ -352,7 +352,7 @@ DevOps Team: devops@ahanaai.com
 Legal Team: licensing@ahanaai.com
 
 **For sales inquiries:**  
-Sales Team: sales@ahanaai.com
+Sales Team: jeremiah@AhanaAi.com
 
 **General:**  
 Main: hello@ahanaai.com

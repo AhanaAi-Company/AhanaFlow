@@ -170,14 +170,14 @@ Planned hosted prices. Checkout is not open. The same numbers are on [ahanaflow.
 | **Self-host** | No monthly fee | Your machine. This repository. |
 | **Pro** | $9.99 / month | Planned hosted plan |
 | **Team** | $19.99 / month | Planned hosted plan |
-| **Enterprise** | Email [sales@ahanaai.com](mailto:sales@ahanaai.com) | Ask. Not a self-host fee. |
+| **Enterprise** | Email [jeremiah@AhanaAi.com](mailto:jeremiah@AhanaAi.com) | Ask. Not a self-host fee. |
 
 Community compression on the non-commercial license is 50-60%. A commercial license is what unlocks the Pro dictionary (88.7%).
 
 ### Get a commercial license
 
 1. Read the prices on [www.ahanaflow.com](https://www.ahanaflow.com).
-2. Email [sales@ahanaai.com](mailto:sales@ahanaai.com). Checkout is not open.
+2. Email [jeremiah@AhanaAi.com](mailto:jeremiah@AhanaAi.com). Checkout is not open.
 3. Authenticate the TCP server with your license key (`CompressedStateEngine` does not take `api_key=`):
 
 ```bash
@@ -327,7 +327,7 @@ AhanaFlow is released under a **dual license**:
 - **Community Edition (Non-Commercial):** Free for personal, academic, and open-source use. See [LICENSE](./LICENSE) for details.
 - **Commercial License:** Required for production deployments. Get your API key at [www.ahanaflow.com](https://www.ahanaflow.com).
 
-For commercial inquiries: sales@ahanaai.com
+For commercial inquiries: jeremiah@AhanaAi.com
 
 ---
 

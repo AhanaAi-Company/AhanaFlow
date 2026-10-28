@@ -57,7 +57,7 @@ Go to **[www.ahanaflow.com](https://www.ahanaflow.com)** and click **"Get API Ke
 | **Free commercial** | $0 | Small commercial use (≤10K req/mo) with a free API key |
 | **Pro** | $9.99/mo, planned | Hosted plan. Checkout is not open. |
 | **Team** | $19.99/mo, planned | Hosted plan. Checkout is not open. |
-| **Enterprise** | Email sales@ahanaai.com | Not a self-host fee. |
+| **Enterprise** | Email jeremiah@AhanaAi.com | Not a self-host fee. |
 
 ### Step 3: Complete Registration
 
@@ -68,7 +68,7 @@ Go to **[www.ahanaflow.com](https://www.ahanaflow.com)** and click **"Get API Ke
 
 **For paid plans:**
 1. Checkout is not open.
-2. Email sales@ahanaai.com with the plan name (Pro or Team).
+2. Email jeremiah@AhanaAi.com with the plan name (Pro or Team).
 3. A commercial license is required for commercial use, including a self-hosted copy.
 
 ### Step 4: Store Your API Key Securely
@@ -239,7 +239,7 @@ Monitor your usage at [www.ahanaflow.com/dashboard](https://www.ahanaflow.com/da
 |---------|-----------|-----|------|------------|
 | **Where it runs** | Your machine | Planned hosted plan | Planned hosted plan | Ask |
 | **Compression** | 50-60% on the community license | 88.7% with a commercial license | 88.7% with a commercial license | Ask |
-| **Price** | No monthly fee | $9.99/mo, planned | $19.99/mo, planned | Email sales@ahanaai.com |
+| **Price** | No monthly fee | $9.99/mo, planned | $19.99/mo, planned | Email jeremiah@AhanaAi.com |
 
 ---
 
@@ -269,7 +269,7 @@ For current public performance positioning, use `docs/PRODUCTION_READINESS_REPOR
 
 ### 3. Support & SLA
 
-Support hours are not published on the current plan page. Email sales@ahanaai.com for Pro, Team, or Enterprise. Non-commercial self-host questions stay on GitHub issues.
+Support hours are not published on the current plan page. Email jeremiah@AhanaAi.com for Pro, Team, or Enterprise. Non-commercial self-host questions stay on GitHub issues.
 
 ### 4. Legal Indemnification
 
@@ -352,7 +352,7 @@ To rotate your API key:
 ### Contact Sales
 
 For enterprise inquiries:
-- **Email:** sales@ahanaai.com
+- **Email:** jeremiah@AhanaAi.com
 - **Schedule a Call:** [calendly.com/ahanaai-sales](https://calendly.com/ahanaai-sales)
 
 ---
